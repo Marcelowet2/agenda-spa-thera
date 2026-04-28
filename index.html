@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Spa Thera</title>
+    <meta name="description" content="Sistema de agendamento de atendimentos para o Spa Thera. Luxo, organização e praticidade.">
+    <meta name="author" content="Spa Thera">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- PWA Social & iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Spa Thera">
+    <link rel="apple-touch-icon" href="assets/icon-512.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#b08d57">
+</head>
+<body>
+    <div class="background-overlay"></div>
+    
+    <header>
+        <div class="header-content">
+            <div class="logo-area">
+                <h1 id="app-title">Spa Thera</h1>
+                <p class="subtitle">Bem-estar e Renovação</p>
+                <div class="ornament"></div>
+            </div>
+            <div class="header-controls">
+                <div class="date-section">
+                    <label for="date-picker" id="date-label">Carregando data...</label>
+                    <input type="date" id="date-picker">
+                </div>
+                <div class="control-section">
+                    <label for="control-number">Nº Controle</label>
+                    <input type="text" id="control-number" placeholder="00000" maxlength="20">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="table-container">
+            <table id="agenda-table">
+                <thead>
+                    <tr>
+                        <th scope="col">HORA</th>
+                        <th scope="col">NOME COMPLETO</th>
+                        <th scope="col">SERVIÇO</th>
+                        <th scope="col">TEMPO</th>
+                        <th scope="col">VALOR</th>
+                        <th scope="col">QUARTO</th>
+                    </tr>
+                </thead>
+                <tbody id="agenda-body">
+                    <!-- Rows will be injected by script.js -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="actions">
+            <button id="clear-btn" class="btn-secondary">Limpar Agenda</button>
+            <button id="report-btn" class="btn-report">📊 Relatório Financeiro</button>
+            <button id="print-btn" class="btn-primary">Imprimir / Salvar PDF</button>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Spa Thera - Todos os direitos reservados.</p>
+    </footer>
+
+    <!-- Report Modal -->
+    <div id="report-modal" class="modal-overlay" aria-hidden="true">
+        <div class="modal-box" role="dialog" aria-labelledby="modal-title">
+            <button id="modal-close" class="modal-close" aria-label="Fechar">&times;</button>
+            
+            <div id="report-export-area">
+                <div class="modal-header">
+                    <h2 id="modal-title">Relatório Financeiro</h2>
+                    <p class="modal-subtitle">Selecione o período para calcular o faturamento</p>
+                </div>
+
+                <div class="modal-filters">
+                    <div class="filter-group">
+                        <label for="report-start">Data Início</label>
+                        <input type="date" id="report-start">
+                    </div>
+                    <div class="filter-divider">até</div>
+                    <div class="filter-group">
+                        <label for="report-end">Data Fim</label>
+                        <input type="date" id="report-end">
+                    </div>
+                    <button id="generate-report-btn" class="btn-primary">Gerar Relatório</button>
+                </div>
+
+                <div id="report-results" class="report-results" style="display:none;">
+                    <div class="report-table-wrapper">
+                        <table id="report-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Hora</th>
+                                    <th>Nome</th>
+                                    <th>Serviço</th>
+                                    <th>Valor</th>
+                                    <th>Tipo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="report-body"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="report-summary">
+                        <div class="summary-row">
+                            <span class="summary-label">🎁 Cortesias</span>
+                            <span class="summary-value" id="total-cortesias" style="font-size:1.2rem; color:#888;">0 atendimento(s)</span>
+                        </div>
+                        <div class="summary-divider"></div>
+                        <div class="summary-row">
+                            <span class="summary-label">Total Bruto</span>
+                            <span class="summary-value" id="total-bruto">R$ 0,00</span>
+                        </div>
+                        <div class="summary-divider"></div>
+                        <div class="summary-row highlight">
+                            <span class="summary-label">Total Líquido <small>(−30%)</small></span>
+                            <span class="summary-value gold" id="total-liquido">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="report-empty" class="report-empty" style="display:none;">
+                    <p>Nenhum valor encontrado para o período selecionado.</p>
+                </div>
+            </div>
+
+            <div class="report-actions">
+                <button id="save-pdf-btn" class="btn-pdf">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Salvar como PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- html2pdf library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Scripts -->
+    <script src="script.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registrado!'))
+                    .catch(err => console.log('Erro no Service Worker', err));
+            });
+        }
+    </script>
+</body>
+</html>
