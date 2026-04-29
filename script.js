@@ -87,59 +87,126 @@ const applyCortesiaClass = (tr, valorValue) => {
 };
 
 // UI Generation
+// ─── Mobile Sheet Logic ───
+let activeSlotKey = null;
+
+const openEditSheet = (slotKey, hourLabel, data) => {
+    activeSlotKey = slotKey;
+    document.getElementById('sheet-hour-title').textContent = hourLabel;
+    
+    document.getElementById('sheet-nome').value = data.nome || '';
+    document.getElementById('sheet-servico').value = data.servico || '';
+    document.getElementById('sheet-tempo').value = data.tempo || '';
+    document.getElementById('sheet-valor').value = data.valor || '';
+    document.getElementById('sheet-quarto').value = data.quarto || '';
+    
+    const sheet = document.getElementById('edit-sheet');
+    sheet.classList.add('open');
+    sheet.setAttribute('aria-hidden', 'false');
+};
+
+const closeEditSheet = () => {
+    document.getElementById('edit-sheet').classList.remove('open');
+    document.getElementById('edit-sheet').setAttribute('aria-hidden', 'true');
+    activeSlotKey = null;
+};
+
+const saveSheetData = () => {
+    if (!activeSlotKey) return;
+    
+    const fields = {
+        nome: document.getElementById('sheet-nome').value,
+        servico: document.getElementById('sheet-servico').value,
+        tempo: document.getElementById('sheet-tempo').value,
+        valor: document.getElementById('sheet-valor').value,
+        quarto: document.getElementById('sheet-quarto').value
+    };
+    
+    Object.entries(fields).forEach(([key, val]) => {
+        saveAppointment(`${activeSlotKey}-${key}`, val);
+    });
+    
+    renderAgenda();
+    closeEditSheet();
+};
+
 const renderAgenda = async () => {
     const body = document.getElementById('agenda-body');
+    const isMobile = window.innerWidth <= 768;
     body.innerHTML = '';
     
     const savedData = await loadAppointmentsForDate();
     const dataMap = new Map(savedData.map(item => [item.id.replace(`${selectedDate}_`, ''), item.value]));
 
-    const START_MINUTES = START_HOUR * 60;      // 15 * 60 = 900
-    const END_MINUTES   = END_HOUR   * 60;      // 20 * 60 = 1200
-    const STEP          = 30;                   // 30 minutes
+    const START_MINUTES = START_HOUR * 60;
+    const END_MINUTES   = END_HOUR   * 60;
+    const STEP          = 30;
 
     for (let totalMin = START_MINUTES; totalMin <= END_MINUTES; totalMin += STEP) {
         const h   = Math.floor(totalMin / 60);
         const min = totalMin % 60;
         const hourLabel = `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
-        const slotKey   = `${h}h${String(min).padStart(2, '0')}`; // e.g. "15h00", "15h30"
+        const slotKey   = `${h}h${String(min).padStart(2, '0')}`;
 
         const tr = document.createElement('tr');
         const columnKeys = ['nome', 'servico', 'tempo', 'valor', 'quarto'];
+        
+        // Get data for this slot
+        const slotData = {};
+        columnKeys.forEach(k => slotData[k] = dataMap.get(`${slotKey}-${k}`) || '');
 
         const tdHour = document.createElement('td');
         tdHour.textContent = hourLabel;
         tdHour.classList.add('hour-cell');
         tr.appendChild(tdHour);
 
-        let valorInput = null;
-
-        columnKeys.forEach(key => {
-            const td = document.createElement('td');
-            td.setAttribute('data-label', key.toUpperCase()); // Para uso no CSS mobile
-            const input = document.createElement('input');
-            const cellId = `${slotKey}-${key}`;
-
-            input.id = cellId;
-            input.type = 'text';
-            input.value = dataMap.get(cellId) || '';
-
-            if (key === 'valor') {
-                valorInput = input;
-                input.inputmode = 'decimal';
-            }
-
-            input.addEventListener('input', (e) => {
-                saveAppointment(cellId, e.target.value);
-                if (key === 'valor') applyCortesiaClass(tr, e.target.value);
+        if (isMobile) {
+            // Render Compact Summary for Mobile
+            tr.classList.add('mobile-summary-row');
+            const tdSummary = document.createElement('td');
+            tdSummary.colSpan = 5;
+            
+            const hasData = slotData.nome || slotData.servico;
+            tdSummary.innerHTML = `
+                <div class="summary-content ${hasData ? 'has-info' : 'empty'}">
+                    <span class="client-name">${slotData.nome || '<i>Disponível</i>'}</span>
+                    <span class="service-name">${slotData.servico ? '✦ ' + slotData.servico : ''}</span>
+                    <span class="edit-icon">✎</span>
+                </div>
+            `;
+            
+            tr.addEventListener('click', () => openEditSheet(slotKey, hourLabel, slotData));
+            tr.appendChild(tdSummary);
+            
+            if (isCortesia(slotData.valor)) tr.classList.add('row-cortesia');
+        } else {
+            // Render Normal Inputs for Desktop
+            let valorInput = null;
+            columnKeys.forEach(key => {
+                const td = document.createElement('td');
+                td.setAttribute('data-label', key.toUpperCase());
+                const input = document.createElement('input');
+                const cellId = `${slotKey}-${key}`;
+    
+                input.id = cellId;
+                input.type = 'text';
+                input.value = slotData[key];
+    
+                if (key === 'valor') {
+                    valorInput = input;
+                    input.inputmode = 'decimal';
+                }
+    
+                input.addEventListener('input', (e) => {
+                    saveAppointment(cellId, e.target.value);
+                    if (key === 'valor') applyCortesiaClass(tr, e.target.value);
+                });
+    
+                td.appendChild(input);
+                tr.appendChild(td);
             });
-
-            td.appendChild(input);
-            tr.appendChild(td);
-        });
-
-        // Apply cortesia class on load
-        if (valorInput) applyCortesiaClass(tr, valorInput.value);
+            if (valorInput) applyCortesiaClass(tr, valorInput.value);
+        }
 
         body.appendChild(tr);
     }
@@ -491,9 +558,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('generate-report-btn').addEventListener('click', generateReport);
     document.getElementById('save-pdf-btn').addEventListener('click', downloadReportPDF);
 
-    // Close modal clicking outside
-    document.getElementById('report-modal').addEventListener('click', (e) => {
-        if (e.target === document.getElementById('report-modal')) closeModal();
+    // Edit Sheet Events
+    document.getElementById('sheet-save-btn').addEventListener('click', saveSheetData);
+    document.getElementById('edit-sheet').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('edit-sheet')) closeEditSheet();
+    });
+
+    // Handle Window Resize for dynamic UI update
+    let lastWidth = window.innerWidth;
+    window.addEventListener('resize', () => {
+        if ((lastWidth > 768 && window.innerWidth <= 768) || (lastWidth <= 768 && window.innerWidth > 768)) {
+            renderAgenda();
+        }
+        lastWidth = window.innerWidth;
     });
 
     // Close modal with Escape key

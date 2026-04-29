@@ -149,6 +149,44 @@
         </div>
     </div>
 
+    <!-- Mobile Edit Sheet (Bottom Sheet) -->
+    <div id="edit-sheet" class="sheet-overlay" aria-hidden="true">
+        <div class="sheet-content" role="dialog">
+            <div class="sheet-handle"></div>
+            <div class="sheet-header">
+                <h3 id="sheet-hour-title">15:00</h3>
+                <p>Detalhes do Agendamento</p>
+            </div>
+            <div class="sheet-body">
+                <div class="input-field">
+                    <label>Nome do Cliente</label>
+                    <input type="text" id="sheet-nome" placeholder="Digite o nome completo">
+                </div>
+                <div class="input-row">
+                    <div class="input-field">
+                        <label>Serviço</label>
+                        <input type="text" id="sheet-servico" placeholder="Ex: Massagem">
+                    </div>
+                    <div class="input-field">
+                        <label>Tempo</label>
+                        <input type="text" id="sheet-tempo" placeholder="Ex: 60min">
+                    </div>
+                </div>
+                <div class="input-row">
+                    <div class="input-field">
+                        <label>Valor (R$)</label>
+                        <input type="text" id="sheet-valor" inputmode="decimal" placeholder="0,00">
+                    </div>
+                    <div class="input-field">
+                        <label>Quarto</label>
+                        <input type="text" id="sheet-quarto" placeholder="Nº">
+                    </div>
+                </div>
+                <button id="sheet-save-btn" class="btn-primary">Confirmar e Salvar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- html2pdf library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Scripts -->
