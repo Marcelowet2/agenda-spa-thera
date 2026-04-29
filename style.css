@@ -34,7 +34,7 @@ body {
 header {
     padding: 80px 20px 40px;
     text-align: center;
-    background: linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(255,255,255,0.7) 100%);
+    background: transparent;
     position: relative;
     z-index: 10;
 }
@@ -226,51 +226,74 @@ table {
     border-collapse: collapse;
 }
 
-thead th {
-    font-family: 'Playfair Display', serif;
-    font-weight: 700;
-    text-align: left;
-    padding: 20px;
-    color: var(--primary-gold);
-    border-bottom: 2px solid var(--primary-gold);
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
+thead {
+    display: none; /* Uniform clean list look */
 }
 
 tbody tr {
-    border-bottom: 1px solid #f0f0f0;
+    background: white !important;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    display: flex;
+    align-items: stretch;
+    min-height: 80px;
+    box-shadow: 0 4px 12px rgba(176,141,87,0.06);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(176,141,87,0.05);
 }
 
-tbody td {
-    padding: 15px 20px;
+tbody tr:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(176,141,87,0.12);
+    border-color: rgba(176,141,87,0.2);
 }
 
-tbody input {
+.agenda-summary-row td {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 0 30px !important;
+}
+
+.summary-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     width: 100%;
-    border: 1px solid transparent;
-    background: transparent;
-    padding: 10px;
-    font-size: 0.95rem;
-    color: var(--deep-text);
-    font-family: 'Montserrat', sans-serif;
-    outline: none;
-    transition: all 0.2s ease;
 }
 
-tbody input:focus {
-    background: white;
-    border-color: var(--border-color);
-    border-radius: 4px;
+.summary-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.summary-details {
+    display: flex;
+    gap: 20px;
+    font-size: 0.9rem;
+    color: var(--light-text);
+}
+
+.detail-valor {
+    color: #2e7d32;
+    font-weight: 600;
 }
 
 .hour-cell {
+    background: var(--soft-cream);
+    width: 100px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px 0 0 12px;
+    border-right: 1px solid rgba(176,141,87,0.1);
     font-family: 'Playfair Display', serif;
     font-weight: 700;
     color: var(--primary-gold);
-    font-size: 1.1rem;
-    white-space: nowrap;
-    width: 70px;
+    font-size: 1.4rem;
+    flex-shrink: 0;
 }
 
 /* Cortesia rows */
@@ -366,38 +389,93 @@ footer {
     letter-spacing: 1px;
 }
 
-/* ─── Modal ─── */
-.modal-overlay {
+/* ─── Unified Edit Modal / Sheet ─── */
+.sheet-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.55);
-    backdrop-filter: blur(4px);
-    z-index: 1000;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(5px);
+    z-index: 2000;
     display: flex;
-    align-items: center;
+    align-items: center; /* Center for Desktop */
     justify-content: center;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;
 }
 
-.modal-overlay.open {
+.sheet-overlay.open {
     opacity: 1;
     pointer-events: all;
 }
 
-.modal-box {
+.sheet-content {
     background: white;
-    border-radius: 12px;
-    padding: 50px;
     width: 90%;
-    max-width: 820px;
-    max-height: 85vh;
+    max-width: 550px;
+    border-radius: 20px;
+    padding: 40px;
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 90vh;
     overflow-y: auto;
-    position: relative;
-    transform: translateY(20px);
-    transition: transform 0.3s ease;
-    box-shadow: 0 25px 60px rgba(0,0,0,0.2);
+    box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+}
+
+.sheet-overlay.open .sheet-content {
+    transform: scale(1);
+}
+
+.sheet-handle {
+    display: none; /* Only mobile */
+}
+
+.sheet-header {
+    margin-bottom: 30px;
+    text-align: center;
+    border-bottom: 2px solid var(--soft-cream);
+    padding-bottom: 15px;
+}
+
+#sheet-hour-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    color: var(--primary-gold);
+}
+
+.sheet-body {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.input-row {
+    display: flex;
+    gap: 20px;
+}
+
+.input-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input-field label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--primary-gold);
+}
+
+.input-field input {
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    font-size: 1rem;
+    background: #fcfcfc;
+    outline: none;
+    width: 100%;
 }
 
 .modal-overlay.open .modal-box {
@@ -761,35 +839,18 @@ footer {
         font-weight: 400;
     }
 
-    /* ─── Bottom Sheet ─── */
+    /* ─── Bottom Sheet Overrides ─── */
     .sheet-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.4);
-        z-index: 2000;
-        display: flex;
         align-items: flex-end;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s ease;
-    }
-
-    .sheet-overlay.open {
-        opacity: 1;
-        pointer-events: all;
     }
 
     .sheet-content {
-        background: white;
         width: 100%;
-        border-top-left-radius: 25px;
-        border-top-right-radius: 25px;
-        padding: 20px 20px 40px; 
+        max-width: none;
+        border-radius: 25px 25px 0 0;
+        padding: 20px 20px 40px;
         transform: translateY(100%);
         transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        max-height: 90vh;
-        overflow-y: auto;
-        box-sizing: border-box;
     }
 
     .sheet-overlay.open .sheet-content {
@@ -797,6 +858,7 @@ footer {
     }
 
     .sheet-handle {
+        display: block;
         width: 40px;
         height: 5px;
         background: #ddd;
@@ -804,103 +866,28 @@ footer {
         margin: 0 auto 20px;
     }
 
-    .sheet-header {
-        margin-bottom: 25px;
-        text-align: center;
-    }
-
-    #sheet-hour-title {
-        font-family: 'Playfair Display', serif;
-        font-size: 1.8rem;
-        color: var(--primary-gold);
-    }
-
-    .sheet-header p {
-        font-size: 0.85rem;
-        color: var(--light-text);
-        text-transform: uppercase;
-        letter-spacing: 2px;
-    }
-
-    .sheet-body {
-        display: flex;
+    .input-row {
         flex-direction: column;
-        gap: 20px;
+        gap: 15px;
     }
 
     .input-field {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
-
-    .input-row {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
         width: 100%;
     }
 
-    .input-row .input-field {
-        flex: none;
-        width: 100%;
-    }
-
-    .input-field label {
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        color: var(--primary-gold);
-        letter-spacing: 1px;
-    }
-
-    .input-field input {
-        padding: 12px 15px;
-        border: 1px solid #eee;
-        border-radius: 12px;
-        font-size: 1rem;
-        background: #fcfcfc;
-        outline: none;
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-    .input-field input:focus {
-        border-color: var(--primary-gold);
-        background: white;
-    }
-
-    #sheet-save-btn {
-        margin-top: 10px;
-        padding: 20px;
-        border-radius: 15px;
-        font-size: 1rem;
-    }
-
-    /* Rodapé de Botões no Mobile */
+    /* Botões de Ação no Mobile */
     .actions {
-        display: flex;
         flex-direction: column;
-        gap: 15px;
-        padding: 0 20px;
-        margin: 50px 0;
-        width: 100%;
+        gap: 12px;
+        padding: 0 15px;
+        margin: 40px 0;
     }
 
     .actions button {
         width: 100%;
-        font-size: 1rem;
         padding: 20px;
-        border-radius: 15px;
-        display: flex;
-        align-items: center;
+        font-size: 1rem;
+        border-radius: 12px;
         justify-content: center;
-        gap: 10px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-
-    .btn-secondary {
-        background: white;
-        border: 1px solid rgba(176,141,87,0.3) !important;
     }
 }

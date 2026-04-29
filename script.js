@@ -132,7 +132,6 @@ const saveSheetData = () => {
 
 const renderAgenda = async () => {
     const body = document.getElementById('agenda-body');
-    const isMobile = window.innerWidth <= 768;
     body.innerHTML = '';
     
     const savedData = await loadAppointmentsForDate();
@@ -160,53 +159,30 @@ const renderAgenda = async () => {
         tdHour.classList.add('hour-cell');
         tr.appendChild(tdHour);
 
-        if (isMobile) {
-            // Render Compact Summary for Mobile
-            tr.classList.add('mobile-summary-row');
-            const tdSummary = document.createElement('td');
-            tdSummary.colSpan = 5;
-            
-            const hasData = slotData.nome || slotData.servico;
-            tdSummary.innerHTML = `
-                <div class="summary-content ${hasData ? 'has-info' : 'empty'}">
+        // Unified Summary Row for both Desktop and Mobile
+        tr.classList.add('agenda-summary-row');
+        const tdSummary = document.createElement('td');
+        tdSummary.colSpan = 5;
+        
+        const hasData = slotData.nome || slotData.servico;
+        tdSummary.innerHTML = `
+            <div class="summary-content ${hasData ? 'has-info' : 'empty'}">
+                <div class="summary-text">
                     <span class="client-name">${slotData.nome || '<i>Disponível</i>'}</span>
                     <span class="service-name">${slotData.servico ? '✦ ' + slotData.servico : ''}</span>
-                    <span class="edit-icon">✎</span>
                 </div>
-            `;
-            
-            tr.addEventListener('click', () => openEditSheet(slotKey, hourLabel, slotData));
-            tr.appendChild(tdSummary);
-            
-            if (isCortesia(slotData.valor)) tr.classList.add('row-cortesia');
-        } else {
-            // Render Normal Inputs for Desktop
-            let valorInput = null;
-            columnKeys.forEach(key => {
-                const td = document.createElement('td');
-                td.setAttribute('data-label', key.toUpperCase());
-                const input = document.createElement('input');
-                const cellId = `${slotKey}-${key}`;
-    
-                input.id = cellId;
-                input.type = 'text';
-                input.value = slotData[key];
-    
-                if (key === 'valor') {
-                    valorInput = input;
-                    input.inputmode = 'decimal';
-                }
-    
-                input.addEventListener('input', (e) => {
-                    saveAppointment(cellId, e.target.value);
-                    if (key === 'valor') applyCortesiaClass(tr, e.target.value);
-                });
-    
-                td.appendChild(input);
-                tr.appendChild(td);
-            });
-            if (valorInput) applyCortesiaClass(tr, valorInput.value);
-        }
+                <div class="summary-details">
+                    ${slotData.valor ? '<span class="detail-valor">' + slotData.valor + '</span>' : ''}
+                    ${slotData.quarto ? '<span class="detail-quarto">Quarto ' + slotData.quarto + '</span>' : ''}
+                </div>
+                <span class="edit-icon">✎</span>
+            </div>
+        `;
+        
+        tr.addEventListener('click', () => openEditSheet(slotKey, hourLabel, slotData));
+        tr.appendChild(tdSummary);
+        
+        if (isCortesia(slotData.valor)) tr.classList.add('row-cortesia');
 
         body.appendChild(tr);
     }
