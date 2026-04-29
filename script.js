@@ -159,7 +159,7 @@ const renderAgenda = async () => {
         tdHour.classList.add('hour-cell');
         tr.appendChild(tdHour);
 
-        // Unified Summary Row for both Desktop and Mobile
+        // New Luxury Timeline Row
         tr.classList.add('agenda-summary-row');
         const tdSummary = document.createElement('td');
         tdSummary.colSpan = 5;
@@ -167,15 +167,21 @@ const renderAgenda = async () => {
         const hasData = slotData.nome || slotData.servico;
         tdSummary.innerHTML = `
             <div class="summary-content ${hasData ? 'has-info' : 'empty'}">
-                <div class="summary-text">
-                    <span class="client-name">${slotData.nome || '<i>Disponível</i>'}</span>
-                    <span class="service-name">${slotData.servico ? '✦ ' + slotData.servico : ''}</span>
+                <div class="summary-main">
+                    <div class="client-info">
+                        <span class="client-name">${slotData.nome || '<i>Disponível</i>'}</span>
+                        <span class="service-name">${slotData.servico ? '<span class="diamond">✦</span> ' + slotData.servico : ''}</span>
+                    </div>
                 </div>
-                <div class="summary-details">
-                    ${slotData.valor ? '<span class="detail-valor">' + slotData.valor + '</span>' : ''}
-                    ${slotData.quarto ? '<span class="detail-quarto">Quarto ' + slotData.quarto + '</span>' : ''}
+                ${hasData ? `
+                <div class="summary-badges">
+                    ${slotData.quarto ? '<span class="badge badge-quarto">Q.' + slotData.quarto + '</span>' : ''}
+                    ${slotData.valor ? '<span class="badge badge-valor">R$ ' + slotData.valor + '</span>' : ''}
                 </div>
-                <span class="edit-icon">✎</span>
+                ` : '<span class="status-disponivel">Livre</span>'}
+                <div class="edit-indicator">
+                    <span class="edit-icon">✎</span>
+                </div>
             </div>
         `;
         
