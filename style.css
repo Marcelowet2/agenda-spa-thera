@@ -647,16 +647,17 @@ footer {
 /* ─── Mobile Responsiveness (Experience Focus) ─── */
 @media (max-width: 768px) {
     header {
-        padding: 60px 15px 30px;
-        background: white;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        margin-bottom: 20px;
+        padding: 50px 15px 15px;
+        background: transparent; /* Voltando ao minimalismo */
+        box-shadow: none;
     }
 
     h1 {
-        font-size: 3.2rem;
-        line-height: 1;
-        margin-bottom: 12px;
+        font-size: 3.1rem;
+        line-height: 1.1;
+        margin-bottom: 8px;
+        /* Sombra estratégica para ler o dourado no fundo claro */
+        text-shadow: 0 2px 10px rgba(0,0,0,0.15); 
     }
 
     .header-controls {
