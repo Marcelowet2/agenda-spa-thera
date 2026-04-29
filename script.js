@@ -12,12 +12,45 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
+
+const CORRECT_PASS = "Neide6731";
 
 // ─── Constants ───
 const START_HOUR = 15;
 const END_HOUR = 20;
 
 let selectedDate = new Date().toISOString().split('T')[0];
+
+// ─── Security Layer ───
+const checkAuth = async () => {
+    const savedPass = localStorage.getItem('spa_pass');
+    if (savedPass === CORRECT_PASS) {
+        try {
+            await auth.signInAnonymously();
+            document.getElementById('login-overlay').style.display = 'none';
+            renderAgenda();
+        } catch (e) {
+            console.error("Erro na autenticação:", e);
+        }
+    } else {
+        document.getElementById('login-overlay').style.display = 'flex';
+    }
+};
+
+const handleLogin = async () => {
+    const input = document.getElementById('login-pass').value;
+    const errorMsg = document.getElementById('login-error');
+    
+    if (input === CORRECT_PASS) {
+        localStorage.setItem('spa_pass', input);
+        errorMsg.style.display = 'none';
+        await checkAuth();
+    } else {
+        errorMsg.style.display = 'block';
+        document.getElementById('login-pass').value = '';
+    }
+};
 
 // ─── Data Access (Firebase) ───
 
@@ -28,11 +61,11 @@ const loadAppointmentsForDate = async () => {
             .get();
         
         return snapshot.docs.map(doc => ({
-            id: doc.id.split('_')[1], // Extracts '15h00-nome' from '2024-04-28_15h00-nome'
+            id: doc.id.split('_')[1],
             value: doc.data().value
         }));
     } catch (error) {
-        console.error("Erro ao carregar dados do Firebase:", error);
+        console.error("Sem permissão ou erro de rede.");
         return [];
     }
 };
@@ -45,21 +78,17 @@ const saveAppointment = async (cellId, val) => {
             date: selectedDate,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        console.log("Salvo com sucesso:", docId);
     } catch (error) {
-        console.error("Erro ao salvar no Firebase:", error);
-        alert("Erro ao salvar: " + error.message);
+        if(auth.currentUser) alert("Erro ao salvar. Verifique sua conexão.");
     }
 };
 
 const clearDayData = async () => {
     if (!confirm('Deseja realmente limpar TODOS os agendamentos deste dia?')) return;
-    
     try {
         const snapshot = await db.collection('appointments')
             .where('date', '==', selectedDate)
             .get();
-        
         const batch = db.batch();
         snapshot.docs.forEach(doc => batch.delete(doc.ref));
         await batch.commit();
@@ -69,52 +98,12 @@ const clearDayData = async () => {
     }
 };
 
-// ─── Mobile Sheet Logic ───
+// ─── UI Rendering ───
 let activeSlotKey = null;
 
-const openEditSheet = (slotKey, hourLabel, data) => {
-    activeSlotKey = slotKey;
-    document.getElementById('sheet-hour-title').textContent = hourLabel;
-    
-    document.getElementById('sheet-nome').value = data.nome || '';
-    document.getElementById('sheet-servico').value = data.servico || '';
-    document.getElementById('sheet-tempo').value = data.tempo || '';
-    document.getElementById('sheet-valor').value = data.valor || '';
-    document.getElementById('sheet-quarto').value = data.quarto || '';
-    
-    const sheet = document.getElementById('edit-sheet');
-    sheet.classList.add('open');
-    sheet.setAttribute('aria-hidden', 'false');
-};
-
-const closeEditSheet = () => {
-    document.getElementById('edit-sheet').classList.remove('open');
-    document.getElementById('edit-sheet').setAttribute('aria-hidden', 'true');
-    activeSlotKey = null;
-};
-
-const saveSheetData = async () => {
-    if (!activeSlotKey) return;
-    
-    const fields = {
-        nome: document.getElementById('sheet-nome').value,
-        servico: document.getElementById('sheet-servico').value,
-        tempo: document.getElementById('sheet-tempo').value,
-        valor: document.getElementById('sheet-valor').value,
-        quarto: document.getElementById('sheet-quarto').value
-    };
-    
-    const promises = Object.entries(fields).map(([key, val]) => {
-        return saveAppointment(`${activeSlotKey}-${key}`, val);
-    });
-    
-    await Promise.all(promises);
-    renderAgenda();
-    closeEditSheet();
-};
-
-// UI Generation
 const renderAgenda = async () => {
+    if (!auth.currentUser) return; // Proteção extra
+
     const body = document.getElementById('agenda-body');
     body.innerHTML = '';
     
@@ -133,7 +122,6 @@ const renderAgenda = async () => {
 
         const tr = document.createElement('tr');
         const columnKeys = ['nome', 'servico', 'tempo', 'valor', 'quarto'];
-        
         const slotData = {};
         columnKeys.forEach(k => slotData[k] = dataMap.get(`${slotKey}-${k}`) || '');
 
@@ -174,43 +162,53 @@ const renderAgenda = async () => {
         body.appendChild(tr);
     }
     
-    // Update control number
+    // Control number update
     const controlDoc = await db.collection('settings').doc(`control_${selectedDate}`).get();
     document.getElementById('control-number').value = controlDoc.exists ? controlDoc.data().value : '';
 };
 
-const applyCortesiaClass = (row, valor) => {
-    if (isCortesia(valor)) {
-        row.classList.add('row-cortesia');
-    } else {
-        row.classList.remove('row-cortesia');
-    }
+// ─── Shared Logic ───
+const openEditSheet = (slotKey, hourLabel, data) => {
+    activeSlotKey = slotKey;
+    document.getElementById('sheet-hour-title').textContent = hourLabel;
+    document.getElementById('sheet-nome').value = data.nome || '';
+    document.getElementById('sheet-servico').value = data.servico || '';
+    document.getElementById('sheet-tempo').value = data.tempo || '';
+    document.getElementById('sheet-valor').value = data.valor || '';
+    document.getElementById('sheet-quarto').value = data.quarto || '';
+    document.getElementById('edit-sheet').classList.add('open');
 };
 
-const isCortesia = (valor) => {
-    if (!valor) return false;
-    const v = valor.toLowerCase().trim();
-    return v === '0' || v === '0,00' || v === 'cortesia' || v === 'gratis' || v === 'grátis';
+const closeEditSheet = () => {
+    document.getElementById('edit-sheet').classList.remove('open');
+    activeSlotKey = null;
 };
 
-// ─── Financial Report ───
+const saveSheetData = async () => {
+    if (!activeSlotKey) return;
+    const fields = {
+        nome: document.getElementById('sheet-nome').value,
+        servico: document.getElementById('sheet-servico').value,
+        tempo: document.getElementById('sheet-tempo').value,
+        valor: document.getElementById('sheet-valor').value,
+        quarto: document.getElementById('sheet-quarto').value
+    };
+    const promises = Object.entries(fields).map(([key, val]) => saveAppointment(`${activeSlotKey}-${key}`, val));
+    await Promise.all(promises);
+    renderAgenda();
+    closeEditSheet();
+};
 
 const generateReport = async () => {
+    if (!auth.currentUser) return;
     const start = document.getElementById('report-start').value;
     const end = document.getElementById('report-end').value;
-    
-    if (!start || !end) {
-        alert('Por favor, selecione as datas de início e fim.');
-        return;
-    }
+    if (!start || !end) { alert('Selecione as datas.'); return; }
 
     const resultsDiv = document.getElementById('report-results');
-    const emptyDiv = document.getElementById('report-empty');
     const reportBody = document.getElementById('report-body');
-    
     resultsDiv.style.display = 'none';
-    emptyDiv.style.display = 'none';
-    reportBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Calculando...</td></tr>';
+    reportBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Calculando...</td></tr>';
 
     try {
         const snapshot = await db.collection('appointments')
@@ -218,109 +216,72 @@ const generateReport = async () => {
             .where('date', '<=', end)
             .get();
 
-        if (snapshot.empty) {
-            emptyDiv.style.display = 'block';
-            return;
-        }
-
-        const allData = snapshot.docs.map(doc => ({
-            fullId: doc.id,
-            date: doc.data().date,
-            value: doc.data().value
-        }));
-
-        // Group by Date and Slot to reconstruct appointments
+        if (snapshot.empty) { document.getElementById('report-empty').style.display = 'block'; return; }
+        
         const appointments = {};
-        allData.forEach(item => {
-            const [date, cellId] = item.fullId.split('_');
+        snapshot.docs.forEach(doc => {
+            const [date, cellId] = doc.id.split('_');
             const slotKey = cellId.split('-')[0];
             const field = cellId.split('-')[1];
-            
             const key = `${date}_${slotKey}`;
             if (!appointments[key]) appointments[key] = { date: date, hour: slotKey.replace('h', ':') };
-            appointments[key][field] = item.value;
+            appointments[key][field] = doc.data().value;
         });
 
         const rows = Object.values(appointments).filter(a => a.nome || a.valor);
-        
-        if (rows.length === 0) {
-            emptyDiv.style.display = 'block';
-            return;
-        }
-
         reportBody.innerHTML = '';
-        let totalVal = 0;
-        let countCortesia = 0;
+        let totalVal = 0, countC = 0;
 
-        rows.sort((a, b) => a.date.localeCompare(b.date) || a.hour.localeCompare(b.hour)).forEach(app => {
-            const tr = document.createElement('tr');
+        rows.sort((a,b)=>a.date.localeCompare(b.date)||a.hour.localeCompare(b.hour)).forEach(app => {
             const isC = isCortesia(app.valor);
-            
-            let cleanVal = 0;
-            if (!isC && app.valor) {
-                cleanVal = parseFloat(app.valor.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0;
-            }
-            if (isC) countCortesia++;
-            totalVal += cleanVal;
+            let val = 0;
+            if (!isC && app.valor) val = parseFloat(app.valor.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0;
+            if (isC) countC++;
+            totalVal += val;
 
+            const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${app.date.split('-').reverse().join('/')}</td>
                 <td>${app.hour}</td>
                 <td>${app.nome || '-'}</td>
                 <td>${app.servico || '-'}</td>
-                <td>${isC ? '<span class="badge-cortesia">CORTESIA</span>' : 'R$ ' + (app.valor || '0,00')}</td>
+                <td>${isC ? 'CORTESIA' : 'R$ ' + (app.valor || '0,00')}</td>
                 <td>${isC ? 'Cortesia' : 'Normal'}</td>
             `;
             if (isC) tr.classList.add('row-cortesia');
             reportBody.appendChild(tr);
         });
 
-        document.getElementById('total-cortesias').textContent = `${countCortesia} atendimento(s)`;
+        document.getElementById('total-cortesias').textContent = `${countC} atendimento(s)`;
         document.getElementById('total-bruto').textContent = totalVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         document.getElementById('total-liquido').textContent = (totalVal * 0.7).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        
         resultsDiv.style.display = 'block';
-    } catch (error) {
-        console.error("Erro no relatório:", error);
-        alert("Erro ao gerar relatório.");
-    }
+    } catch (e) { alert("Erro ao gerar relatório."); }
 };
 
-// ─── Initialization ───
-document.addEventListener('DOMContentLoaded', () => {
-    const datePicker = document.getElementById('date-picker');
-    datePicker.value = selectedDate;
+const isCortesia = (v) => v && ['0','0,00','cortesia','gratis','grátis'].includes(v.toLowerCase().trim());
 
-    datePicker.addEventListener('change', (e) => {
-        selectedDate = e.target.value;
-        renderAgenda();
+// ─── Events ───
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+    
+    document.getElementById('login-btn').addEventListener('click', handleLogin);
+    document.getElementById('login-pass').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleLogin();
     });
 
+    const dp = document.getElementById('date-picker');
+    dp.value = selectedDate;
+    dp.addEventListener('change', (e) => { selectedDate = e.target.value; renderAgenda(); });
+
     document.getElementById('control-number').addEventListener('input', (e) => {
-        db.collection('settings').doc(`control_${selectedDate}`).set({ value: e.target.value });
+        if(auth.currentUser) db.collection('settings').doc(`control_${selectedDate}`).set({ value: e.target.value });
     });
 
     document.getElementById('clear-btn').addEventListener('click', clearDayData);
-    document.getElementById('report-btn').addEventListener('click', () => {
-        document.getElementById('report-modal').classList.add('open');
-    });
-    
-    document.getElementById('modal-close').addEventListener('click', () => {
-        document.getElementById('report-modal').classList.remove('open');
-    });
-
+    document.getElementById('report-btn').addEventListener('click', () => document.getElementById('report-modal').classList.add('open'));
+    document.getElementById('modal-close').addEventListener('click', () => document.getElementById('report-modal').classList.remove('open'));
     document.getElementById('generate-report-btn').addEventListener('click', generateReport);
     document.getElementById('sheet-save-btn').addEventListener('click', saveSheetData);
-    
-    document.getElementById('edit-sheet').addEventListener('click', (e) => {
-        if (e.target.id === 'edit-sheet') closeEditSheet();
-    });
-
-    document.getElementById('report-modal').addEventListener('click', (e) => {
-        if (e.target.id === 'report-modal') {
-            document.getElementById('report-modal').classList.remove('open');
-        }
-    });
-
-    renderAgenda();
+    document.getElementById('edit-sheet').addEventListener('click', (e) => { if(e.target.id === 'edit-sheet') closeEditSheet(); });
 });

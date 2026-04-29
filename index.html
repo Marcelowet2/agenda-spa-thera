@@ -10,6 +10,7 @@
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Tenor+Sans&display=swap" rel="stylesheet">
     
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="style.css?v=2.0">
+    <link rel="stylesheet" href="style.css?v=3.0">
     
     <!-- PWA Social & iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -28,6 +29,20 @@
     <meta name="theme-color" content="#b08d57">
 </head>
 <body>
+    <!-- Login Screen -->
+    <div id="login-overlay" class="login-overlay">
+        <div class="login-box">
+            <div class="login-logo">
+                <span class="title-spa">Spa</span>
+                <span class="title-thera">Thera</span>
+            </div>
+            <p>Acesso Restrito</p>
+            <input type="password" id="login-pass" placeholder="Digite a senha de acesso">
+            <button id="login-btn" class="btn-primary">Entrar</button>
+            <p id="login-error" class="login-error" style="display:none;">Senha incorreta. Tente novamente.</p>
+        </div>
+    </div>
+
     <div class="background-overlay"></div>
     
     <header>
@@ -195,7 +210,7 @@
     <!-- html2pdf library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Scripts -->
-    <script src="script.js?v=2.2"></script>
+    <script src="script.js?v=3.0"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

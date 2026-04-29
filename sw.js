@@ -1,4 +1,4 @@
-const CACHE_NAME = 'spa-thera-v2.2';
+const CACHE_NAME = 'spa-thera-v3.0';
 const ASSETS = [
   './',
   './index.html',
