@@ -640,63 +640,102 @@ footer {
 /* ─── Mobile Responsiveness (iPhone) ─── */
 @media (max-width: 768px) {
     header {
-        padding: 40px 15px 20px;
+        padding: 30px 15px 15px;
     }
 
     h1 {
-        font-size: 2.2rem;
-        letter-spacing: 4px;
-    }
-
-    .subtitle {
-        font-size: 0.75rem;
+        font-size: 2.1rem;
         letter-spacing: 2px;
     }
 
-    .header-controls {
-        flex-direction: row;
-        gap: 10px;
-    }
-
-    .date-section, .control-section {
-        padding: 8px 15px;
-        flex: 1;
-    }
-
-    #date-picker, #control-number {
-        font-size: 0.95rem;
-        width: 100%;
-    }
-
-    .table-container {
-        padding: 15px;
-        border-radius: 5px;
-    }
-
-    thead th {
-        padding: 12px 10px;
+    .subtitle {
         font-size: 0.7rem;
         letter-spacing: 1px;
     }
 
-    tbody td {
-        padding: 8px 5px;
+    .header-controls {
+        flex-direction: column;
+        width: 100%;
+        gap: 12px;
     }
 
-    tbody input {
-        padding: 8px 5px;
-        font-size: 0.85rem;
+    .date-section, .control-section {
+        width: 100%;
+        padding: 10px 20px;
+    }
+
+    .table-container {
+        padding: 10px;
+        background: transparent;
+        box-shadow: none;
+        border: none;
+    }
+
+    /* Transform Table into Cards */
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+
+    thead {
+        display: none; /* Esconde o cabeçalho da tabela */
+    }
+
+    tbody tr {
+        background: white;
+        margin-bottom: 25px;
+        border-radius: 15px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        padding: 15px;
+        position: relative;
     }
 
     .hour-cell {
-        font-size: 0.9rem;
-        width: 50px;
+        display: block !important;
+        width: 100% !important;
+        background: var(--soft-cream);
+        margin: -15px -15px 15px -15px;
+        padding: 10px 15px !important;
+        border-radius: 14px 14px 0 0;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 1.2rem !important;
+        text-align: center;
+    }
+
+    tbody td:not(.hour-cell) {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #f9f9f9;
+    }
+
+    tbody td:last-child {
+        border-bottom: none;
+    }
+
+    /* Usa o data-label que adicionamos no JS */
+    tbody td:not(.hour-cell)::before {
+        content: attr(data-label);
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: var(--primary-gold);
+        letter-spacing: 1px;
+        min-width: 80px;
+    }
+
+    tbody input {
+        text-align: right;
+        padding: 5px;
+        font-size: 1rem;
+        width: 60%;
     }
 
     .actions {
         flex-direction: column;
-        gap: 15px;
-        padding: 0 20px;
+        gap: 12px;
+        padding: 0 15px;
+        margin: 30px 0;
     }
 
     button {
@@ -705,33 +744,22 @@ footer {
         font-size: 0.9rem;
     }
 
-    /* Modal Mobile */
+    /* Ajuste Modal Mobile */
     .modal-box {
-        padding: 25px;
+        padding: 20px;
         width: 95%;
-        max-height: 90vh;
+        border-radius: 15px;
     }
 
     .modal-header h2 {
-        font-size: 1.5rem;
+        font-size: 1.6rem;
     }
 
-    .modal-filters {
-        flex-direction: column;
-        align-items: stretch;
+    #report-table thead {
+        display: table-header-group; /* Mantém tabela no relatório */
     }
-
-    .filter-group input[type="date"] {
-        width: 100%;
+    #report-table, #report-table tr, #report-table td {
+        display: table-row; /* Restaura comportamento para tabela de relatório */
     }
-
-    .filter-divider {
-        text-align: center;
-        padding-bottom: 0;
-    }
-
-    .report-summary {
-        margin-left: 0;
-        max-width: 100%;
-    }
+    #report-table td { display: table-cell; }
 }

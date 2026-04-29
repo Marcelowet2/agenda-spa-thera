@@ -116,6 +116,7 @@ const renderAgenda = async () => {
 
         columnKeys.forEach(key => {
             const td = document.createElement('td');
+            td.setAttribute('data-label', key.toUpperCase()); // Para uso no CSS mobile
             const input = document.createElement('input');
             const cellId = `${slotKey}-${key}`;
 
