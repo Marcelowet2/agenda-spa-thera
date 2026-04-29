@@ -207,8 +207,11 @@ const generateReport = async () => {
 
     const resultsDiv = document.getElementById('report-results');
     const reportBody = document.getElementById('report-body');
+    const emptyDiv = document.getElementById('report-empty');
+    
     resultsDiv.style.display = 'none';
-    reportBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Calculando...</td></tr>';
+    emptyDiv.style.display = 'none';
+    reportBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Buscando na nuvem...</td></tr>';
 
     try {
         const snapshot = await db.collection('appointments')
@@ -216,28 +219,49 @@ const generateReport = async () => {
             .where('date', '<=', end)
             .get();
 
-        if (snapshot.empty) { document.getElementById('report-empty').style.display = 'block'; return; }
+        if (snapshot.empty) { 
+            emptyDiv.style.display = 'block'; 
+            emptyDiv.innerHTML = '<p>Nenhum dado encontrado no Firebase para este período.</p>';
+            return; 
+        }
         
         const appointments = {};
         snapshot.docs.forEach(doc => {
-            const [date, cellId] = doc.id.split('_');
-            const slotKey = cellId.split('-')[0];
-            const field = cellId.split('-')[1];
+            const docId = doc.id;
+            const [date, cellPart] = docId.split('_'); // '2024-04-28', '15h00-valor'
+            if (!cellPart) return;
+            
+            const [slotKey, field] = cellPart.split('-'); // '15h00', 'valor'
             const key = `${date}_${slotKey}`;
-            if (!appointments[key]) appointments[key] = { date: date, hour: slotKey.replace('h', ':') };
+            
+            if (!appointments[key]) {
+                appointments[key] = { date: date, hour: slotKey.replace('h', ':'), nome: '', valor: '' };
+            }
             appointments[key][field] = doc.data().value;
         });
 
-        const rows = Object.values(appointments).filter(a => a.nome || a.valor);
+        const rows = Object.values(appointments).filter(a => (a.nome && a.nome.trim() !== '') || (a.valor && a.valor.trim() !== ''));
+        
+        if (rows.length === 0) {
+            emptyDiv.style.display = 'block';
+            return;
+        }
+
         reportBody.innerHTML = '';
         let totalVal = 0, countC = 0;
 
         rows.sort((a,b)=>a.date.localeCompare(b.date)||a.hour.localeCompare(b.hour)).forEach(app => {
             const isC = isCortesia(app.valor);
-            let val = 0;
-            if (!isC && app.valor) val = parseFloat(app.valor.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0;
+            let valNumeric = 0;
+            
+            if (!isC && app.valor) {
+                // Limpeza agressiva de R$, pontos e vírgulas
+                let clean = app.valor.toString().replace(/R\$/g, '').replace(/\s/g, '').replace(/\./g, '').replace(',', '.');
+                valNumeric = parseFloat(clean) || 0;
+            }
+            
             if (isC) countC++;
-            totalVal += val;
+            totalVal += valNumeric;
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -245,8 +269,8 @@ const generateReport = async () => {
                 <td>${app.hour}</td>
                 <td>${app.nome || '-'}</td>
                 <td>${app.servico || '-'}</td>
-                <td>${isC ? 'CORTESIA' : 'R$ ' + (app.valor || '0,00')}</td>
-                <td>${isC ? 'Cortesia' : 'Normal'}</td>
+                <td>${isC ? '<span class="badge-cortesia">CORTESIA</span>' : 'R$ ' + (app.valor || '0,00')}</td>
+                <td>${isC ? 'Cortesia' : 'Atendimento'}</td>
             `;
             if (isC) tr.classList.add('row-cortesia');
             reportBody.appendChild(tr);
@@ -256,7 +280,10 @@ const generateReport = async () => {
         document.getElementById('total-bruto').textContent = totalVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         document.getElementById('total-liquido').textContent = (totalVal * 0.7).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         resultsDiv.style.display = 'block';
-    } catch (e) { alert("Erro ao gerar relatório."); }
+    } catch (e) { 
+        console.error(e);
+        alert("Erro técnico ao gerar relatório: " + e.message); 
+    }
 };
 
 const isCortesia = (v) => v && ['0','0,00','cortesia','gratis','grátis'].includes(v.toLowerCase().trim());
