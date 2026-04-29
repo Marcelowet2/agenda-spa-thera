@@ -18,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Tenor+Sans&display=swap" rel="stylesheet">
     
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="style.css?v=6.4">
+    <link rel="stylesheet" href="style.css?v=7.3">
     
     <!-- PWA Social & iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -201,19 +201,12 @@
                 <button id="preview-gift-btn" class="btn-primary">Visualizar Prévia</button>
             </div>
 
-            <!-- Card Preview Area -->
-            <div id="gift-preview-container" class="gift-preview-container" style="display:none;">
-                <div id="gift-card-design" class="gift-card-design">
-                    <img src="assets/gift_card_bg.png" class="card-bg-img" alt="Background">
-                    <!-- Informações sobrepostas -->
-                    <div id="view-gift-to" class="card-value">...</div>
-                    <div id="view-gift-from" class="card-value">...</div>
-                    <div id="view-gift-type" class="card-value">...</div>
-                    <div id="view-gift-expiry" class="card-value">...</div>
-                </div>
+            <!-- Área de Desenho Profissional -->
+            <div id="gift-preview-container" class="gift-preview-container" style="display:none; text-align:center;">
+                <canvas id="gift-canvas" width="1200" height="800" style="max-width:100%; border-radius:15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);"></canvas>
                 <div class="gift-footer-actions">
-                    <button id="save-gift-pdf" class="btn-pdf">Salvar em PDF</button>
-                    <button id="save-gift-img" class="btn-image">Baixar Imagem</button>
+                    <button id="save-gift-pdf" class="btn-pdf" style="margin-top:20px;">Salvar como PDF</button>
+                    <button id="save-gift-img" class="btn-image" style="margin-top:20px;">Salvar como Imagem</button>
                 </div>
             </div>
         </div>
@@ -255,10 +248,11 @@
         </div>
     </div>
 
-    <!-- html2pdf library -->
+    <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- Scripts -->
-    <script src="script.js?v=6.4"></script>
+    <script src="script.js?v=7.3"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

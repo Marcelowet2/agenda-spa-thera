@@ -288,53 +288,122 @@ const generateReport = async () => {
 
 const isCortesia = (v) => v && ['0','0,00','cortesia','gratis','grátis'].includes(v.toLowerCase().trim());
 
-// ─── Gift Card Logic ───
+// ─── Gift Card Logic (Ultra-Reliable v7.2 - SVG Embedded) ───
 
 const updateGiftPreview = () => {
-    const from = document.getElementById('gift-from').value || '...';
-    const to = document.getElementById('gift-to').value || '...';
-    const type = document.getElementById('gift-type').value || '...';
-    const expiry = document.getElementById('gift-expiry').value;
+    const canvas = document.getElementById('gift-canvas');
+    const ctx = canvas.getContext('2d');
     
-    document.getElementById('view-gift-from').textContent = from;
-    document.getElementById('view-gift-to').textContent = to;
-    document.getElementById('view-gift-type').textContent = type;
-    
-    const formattedDate = expiry ? expiry.split('-').reverse().join('/') : '...';
-    document.getElementById('view-gift-expiry').textContent = formattedDate;
-    
-    document.getElementById('gift-preview-container').style.display = 'block';
-};
+    // 1. Criar o Template de ALTO LUXO via SVG
+    const svgTemplate = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
+        <!-- Fundo com degradê de seda -->
+        <defs>
+            <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#fdfbf7;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#f5f0e6;stop-opacity:1" />
+            </linearGradient>
+            <filter id="shadow" x="0" y="0" width="200%" height="200%">
+              <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#b08d57" flood-opacity="0.3"/>
+            </filter>
+        </defs>
+        
+        <rect width="1200" height="800" fill="url(#bgGrad)"/>
+        
+        <!-- Marca d'água botânica (Lótus minimalista) -->
+        <path d="M600,400 Q650,300 600,200 Q550,300 600,400 Z" fill="#b08d57" opacity="0.05" transform="scale(3) translate(-400,-150)"/>
+        <path d="M600,400 Q700,350 800,400 Q700,450 600,400 Z" fill="#b08d57" opacity="0.05" transform="scale(3) translate(-400,-150)"/>
+        
+        <!-- Moldura Dupla Dourada -->
+        <rect x="30" y="30" width="1140" height="740" fill="none" stroke="#b08d57" stroke-width="4" rx="10"/>
+        <rect x="45" y="45" width="1110" height="710" fill="none" stroke="#b08d57" stroke-width="1" opacity="0.6" rx="5"/>
+        
+        <!-- Ornamentos de Canto -->
+        <circle cx="30" cy="30" r="15" fill="#b08d57"/>
+        <circle cx="1170" cy="30" r="15" fill="#b08d57"/>
+        <circle cx="30" cy="770" r="15" fill="#b08d57"/>
+        <circle cx="1170" cy="770" r="15" fill="#b08d57"/>
 
-const saveGiftPDF = () => {
-    const element = document.getElementById('gift-card-design');
-    const toName = document.getElementById('gift-to').value || 'Cliente';
-    
-    const opt = {
-        margin:       10,
-        filename:     `Vale_Massagem_${toName}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, allowTaint: true },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        <!-- Branding Master -->
+        <text x="600" y="140" font-family="'Tenor Sans', sans-serif" font-size="28" fill="#b08d57" text-anchor="middle" letter-spacing="15">S P A</text>
+        <text x="600" y="220" font-family="'Cormorant Garamond', serif" font-size="110" fill="#3d362a" text-anchor="middle" font-weight="bold" filter="url(#shadow)">TheraSpa</text>
+        <text x="600" y="280" font-family="serif" font-style="italic" font-size="32" fill="#b08d57" text-anchor="middle">Voucher de Bem-estar &amp; Relaxamento</text>
+        
+        <!-- Linhas de Preenchimento Elegantes -->
+        <g stroke="#b08d57" stroke-width="1" opacity="0.4">
+            <line x1="480" y1="410" x2="1050" y2="410"/>
+            <line x1="480" y1="500" x2="1050" y2="500"/>
+            <line x1="480" y1="590" x2="1050" y2="590"/>
+            <line x1="480" y1="680" x2="1050" y2="680"/>
+        </g>
+
+        <!-- Etiquetas -->
+        <text x="460" y="405" font-family="'Montserrat', sans-serif" font-size="20" fill="#b08d57" text-anchor="end" letter-spacing="3">PARA</text>
+        <text x="460" y="495" font-family="'Montserrat', sans-serif" font-size="20" fill="#b08d57" text-anchor="end" letter-spacing="3">DE</text>
+        <text x="460" y="585" font-family="'Montserrat', sans-serif" font-size="20" fill="#b08d57" text-anchor="end" letter-spacing="3">MASSAGEM</text>
+        <text x="460" y="675" font-family="'Montserrat', sans-serif" font-size="20" fill="#b08d57" text-anchor="end" letter-spacing="3">VALIDADE</text>
+
+        <!-- Selo de Autenticidade -->
+        <circle cx="1050" cy="150" r="60" fill="none" stroke="#b08d57" stroke-width="1" stroke-dasharray="5,5"/>
+        <text x="1050" y="155" font-family="serif" font-size="14" fill="#b08d57" text-anchor="middle">ORIGINAL</text>
+    </svg>`;
+
+    const img = new Image();
+    const svgBlob = new Blob([svgTemplate], {type: 'image/svg+xml;charset=utf-8'});
+    const url = URL.createObjectURL(svgBlob);
+
+    img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+
+        ctx.fillStyle = "#3d362a";
+        ctx.textAlign = "left";
+        ctx.font = "italic 38px serif";
+
+        const to = document.getElementById('gift-to').value || "...";
+        const from = document.getElementById('gift-from').value || "...";
+        const type = document.getElementById('gift-type').value || "...";
+        const expiry = document.getElementById('gift-expiry').value;
+        const formattedDate = expiry ? expiry.split('-').reverse().join('/') : "...";
+
+        // Coordenadas para alinhar com as novas linhas douradas
+        const textX = 480;
+        ctx.fillText(to.toUpperCase(), textX, 403);
+        ctx.fillText(from.toUpperCase(), textX, 493);
+        ctx.fillText(type, textX, 583);
+        ctx.fillText(formattedDate, textX, 673);
+
+        document.getElementById('gift-preview-container').style.display = 'block';
+        URL.revokeObjectURL(url);
     };
-
-    try {
-        html2pdf().set(opt).from(element).save();
-    } catch (e) {
-        alert("Erro ao gerar PDF. Experimente o botão 'Baixar Imagem'.");
-    }
+    img.src = url;
 };
 
 const saveGiftImage = () => {
-    const element = document.getElementById('gift-card-design');
-    const toName = document.getElementById('gift-to').value || 'Cliente';
+    const canvas = document.getElementById('gift-canvas');
+    const toName = document.getElementById('gift-to').value || "Cliente";
+    const dataURL = canvas.toDataURL("image/png");
+    const link = document.createElement('a');
+    link.download = `Vale_Massagem_${toName}.png`;
+    link.href = dataURL;
+    link.click();
+};
 
-    html2canvas(element, { useCORS: true, allowTaint: true, scale: 2 }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = `Vale_Massagem_${toName}.png`;
-        link.href = canvas.toDataURL();
-        link.click();
-    });
+const saveGiftPDF = () => {
+    const canvas = document.getElementById('gift-canvas');
+    const toName = document.getElementById('gift-to').value || "Cliente";
+    
+    try {
+        const { jsPDF } = window.jspdf;
+        // Cria PDF no tamanho do canvas (1200x800 px)
+        const pdf = new jsPDF('l', 'px', [1200, 800]);
+        const imgData = canvas.toDataURL('image/jpeg', 0.9);
+        pdf.addImage(imgData, 'JPEG', 0, 0, 1200, 800);
+        pdf.save(`Vale_Massagem_${toName}.pdf`);
+    } catch (e) {
+        console.error("Erro no PDF:", e);
+        alert("Erro ao gerar PDF. Experimente salvar como Imagem.");
+    }
 };
 
 // ─── Events ───
@@ -356,21 +425,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('clear-btn').addEventListener('click', clearDayData);
     document.getElementById('report-btn').addEventListener('click', () => document.getElementById('report-modal').classList.add('open'));
+    document.getElementById('gift-card-btn').addEventListener('click', () => document.getElementById('gift-card-modal').classList.add('open'));
     document.getElementById('modal-close').addEventListener('click', () => document.getElementById('report-modal').classList.remove('open'));
+    document.getElementById('gift-close').addEventListener('click', () => document.getElementById('gift-card-modal').classList.remove('open'));
+    
     document.getElementById('generate-report-btn').addEventListener('click', generateReport);
     document.getElementById('sheet-save-btn').addEventListener('click', saveSheetData);
     document.getElementById('edit-sheet').addEventListener('click', (e) => { if(e.target.id === 'edit-sheet') closeEditSheet(); });
 
     // Gift Card Events
-    document.getElementById('gift-card-btn').addEventListener('click', () => {
-        document.getElementById('gift-card-modal').classList.add('open');
-    });
-
-    document.getElementById('gift-close').addEventListener('click', () => {
-        document.getElementById('gift-card-modal').classList.remove('open');
-    });
-
     document.getElementById('preview-gift-btn').addEventListener('click', updateGiftPreview);
-    document.getElementById('save-gift-pdf').addEventListener('click', saveGiftPDF);
     document.getElementById('save-gift-img').addEventListener('click', saveGiftImage);
+    document.getElementById('save-gift-pdf').addEventListener('click', saveGiftPDF);
 });
