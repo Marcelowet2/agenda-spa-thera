@@ -45,8 +45,10 @@ const saveAppointment = async (cellId, val) => {
             date: selectedDate,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
+        console.log("Salvo com sucesso:", docId);
     } catch (error) {
         console.error("Erro ao salvar no Firebase:", error);
+        alert("Erro ao salvar: " + error.message);
     }
 };
 
