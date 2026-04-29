@@ -18,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Tenor+Sans&display=swap" rel="stylesheet">
     
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="style.css?v=4.1">
+    <link rel="stylesheet" href="style.css?v=6.4">
     
     <!-- PWA Social & iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -89,6 +89,7 @@
         <div class="actions">
             <button id="clear-btn" class="btn-secondary">Limpar Agenda</button>
             <button id="report-btn" class="btn-report">📊 Relatório Financeiro</button>
+            <button id="gift-card-btn" class="btn-gift">🎁 Vale Massagem</button>
         </div>
     </main>
 
@@ -169,7 +170,54 @@
         </div>
     </div>
 
-    <!-- Mobile Edit Sheet (Bottom Sheet) -->
+    <!-- Gift Card Modal -->
+    <div id="gift-card-modal" class="sheet-overlay" aria-hidden="true">
+        <div class="sheet-content gift-modal-content" role="dialog">
+            <button id="gift-close" class="modal-close">&times;</button>
+            <div class="modal-header">
+                <h2>Gerar Vale Massagem</h2>
+                <p>Crie um cartão de presente personalizado</p>
+            </div>
+            
+            <div class="gift-form">
+                <div class="input-row">
+                    <div class="input-field">
+                        <label>De (Nome):</label>
+                        <input type="text" id="gift-from" placeholder="Ex: Marcelo">
+                    </div>
+                    <div class="input-field">
+                        <label>Para (Nome):</label>
+                        <input type="text" id="gift-to" placeholder="Ex: Luiz">
+                    </div>
+                </div>
+                <div class="input-field">
+                    <label>Tipo de Massagem:</label>
+                    <input type="text" id="gift-type" placeholder="Ex: Massagem Relaxante">
+                </div>
+                <div class="input-field">
+                    <label>Validade:</label>
+                    <input type="date" id="gift-expiry">
+                </div>
+                <button id="preview-gift-btn" class="btn-primary">Visualizar Prévia</button>
+            </div>
+
+            <!-- Card Preview Area -->
+            <div id="gift-preview-container" class="gift-preview-container" style="display:none;">
+                <div id="gift-card-design" class="gift-card-design">
+                    <img src="assets/gift_card_bg.png" class="card-bg-img" alt="Background">
+                    <!-- Informações sobrepostas -->
+                    <div id="view-gift-to" class="card-value">...</div>
+                    <div id="view-gift-from" class="card-value">...</div>
+                    <div id="view-gift-type" class="card-value">...</div>
+                    <div id="view-gift-expiry" class="card-value">...</div>
+                </div>
+                <div class="gift-footer-actions">
+                    <button id="save-gift-pdf" class="btn-pdf">Salvar em PDF</button>
+                    <button id="save-gift-img" class="btn-image">Baixar Imagem</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="edit-sheet" class="sheet-overlay" aria-hidden="true">
         <div class="sheet-content" role="dialog">
             <div class="sheet-handle"></div>
@@ -210,7 +258,7 @@
     <!-- html2pdf library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Scripts -->
-    <script src="script.js?v=4.1"></script>
+    <script src="script.js?v=6.4"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

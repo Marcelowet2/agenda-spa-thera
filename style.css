@@ -781,8 +781,6 @@ footer {
     color: var(--light-text);
     text-transform: uppercase;
     letter-spacing: 1px;
-}
-
 .summary-label small {
     font-size: 0.75rem;
     color: #c0392b;
@@ -1035,4 +1033,122 @@ footer {
         border-radius: 12px;
         justify-content: center;
     }
+
+    /* Ajustes específicos para o Relatório no Mobile */
+    #report-modal .sheet-content {
+        padding: 20px 15px;
+        width: 96%;
+    }
+
+    #report-table thead th {
+        padding: 10px 8px;
+        font-size: 0.7rem;
+    }
+
+    #report-table tbody td {
+        padding: 10px 8px;
+        font-size: 0.8rem;
+    }
+
+    .report-summary {
+        max-width: 100%;
+        margin-top: 20px;
+    }
+
+    .summary-value {
+        font-size: 1.1rem;
+    }
+
+    .summary-value.gold {
+        font-size: 1.3rem;
+    }
+
+    .summary-label {
+        font-size: 0.8rem;
+    }
+}
+
+/* ─── Gift Card Design ─── */
+.btn-gift {
+    background: linear-gradient(135deg, #b08d57, #8a6d3b);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(176, 141, 87, 0.3);
+}
+
+.gift-modal-content {
+    max-width: 650px !important;
+}
+
+.gift-form {
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* ─── Gift Card Design v6.2 (Bulletproof) ─── */
+.gift-card-design {
+    width: 600px;
+    height: 400px;
+    position: relative;
+    margin: 20px auto;
+    background: #f9f9f9;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.card-bg-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 600px;
+    height: 400px;
+    object-fit: contain;
+    z-index: 10;
+}
+
+.card-value {
+    position: absolute;
+    z-index: 100; /* Texto MUITO acima da imagem */
+    left: 230px;
+    width: 320px;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 1.4rem;
+    color: #2c2c2c; /* Cor escura sólida */
+    text-align: left;
+    pointer-events: none;
+}
+
+#view-gift-to     { top: 182px; }
+#view-gift-from   { top: 230px; }
+#view-gift-type   { top: 277px; }
+.gift-footer-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.btn-image {
+    background: #444;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+}
+
+.btn-image:hover { background: #222; }
+
+@media (max-width: 768px) {
+    .card-thera { font-size: 2.5rem; }
+    .card-title { font-size: 1rem; }
+    .gift-modal-content { width: 95% !important; padding: 20px 15px !important; }
 }

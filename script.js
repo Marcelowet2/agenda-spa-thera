@@ -288,6 +288,55 @@ const generateReport = async () => {
 
 const isCortesia = (v) => v && ['0','0,00','cortesia','gratis','grátis'].includes(v.toLowerCase().trim());
 
+// ─── Gift Card Logic ───
+
+const updateGiftPreview = () => {
+    const from = document.getElementById('gift-from').value || '...';
+    const to = document.getElementById('gift-to').value || '...';
+    const type = document.getElementById('gift-type').value || '...';
+    const expiry = document.getElementById('gift-expiry').value;
+    
+    document.getElementById('view-gift-from').textContent = from;
+    document.getElementById('view-gift-to').textContent = to;
+    document.getElementById('view-gift-type').textContent = type;
+    
+    const formattedDate = expiry ? expiry.split('-').reverse().join('/') : '...';
+    document.getElementById('view-gift-expiry').textContent = formattedDate;
+    
+    document.getElementById('gift-preview-container').style.display = 'block';
+};
+
+const saveGiftPDF = () => {
+    const element = document.getElementById('gift-card-design');
+    const toName = document.getElementById('gift-to').value || 'Cliente';
+    
+    const opt = {
+        margin:       10,
+        filename:     `Vale_Massagem_${toName}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, allowTaint: true },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+    };
+
+    try {
+        html2pdf().set(opt).from(element).save();
+    } catch (e) {
+        alert("Erro ao gerar PDF. Experimente o botão 'Baixar Imagem'.");
+    }
+};
+
+const saveGiftImage = () => {
+    const element = document.getElementById('gift-card-design');
+    const toName = document.getElementById('gift-to').value || 'Cliente';
+
+    html2canvas(element, { useCORS: true, allowTaint: true, scale: 2 }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `Vale_Massagem_${toName}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+    });
+};
+
 // ─── Events ───
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
@@ -311,4 +360,17 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('generate-report-btn').addEventListener('click', generateReport);
     document.getElementById('sheet-save-btn').addEventListener('click', saveSheetData);
     document.getElementById('edit-sheet').addEventListener('click', (e) => { if(e.target.id === 'edit-sheet') closeEditSheet(); });
+
+    // Gift Card Events
+    document.getElementById('gift-card-btn').addEventListener('click', () => {
+        document.getElementById('gift-card-modal').classList.add('open');
+    });
+
+    document.getElementById('gift-close').addEventListener('click', () => {
+        document.getElementById('gift-card-modal').classList.remove('open');
+    });
+
+    document.getElementById('preview-gift-btn').addEventListener('click', updateGiftPreview);
+    document.getElementById('save-gift-pdf').addEventListener('click', saveGiftPDF);
+    document.getElementById('save-gift-img').addEventListener('click', saveGiftImage);
 });
