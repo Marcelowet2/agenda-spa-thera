@@ -36,8 +36,11 @@ body {
 }
 
 header {
-    padding: 60px 20px 40px;
+    padding: 80px 20px 40px;
     text-align: center;
+    background: linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(255,255,255,0.7) 100%);
+    position: relative;
+    z-index: 10;
 }
 
 .header-content {
@@ -79,11 +82,12 @@ h1 {
 }
 
 .subtitle {
-    font-size: 0.9rem;
+    font-size: 1rem;
     text-transform: uppercase;
-    letter-spacing: 4px;
-    color: var(--light-text);
-    font-weight: 300;
+    letter-spacing: 6px;
+    color: #5d4a2b; /* Darker gold/brown for legibility */
+    font-weight: 400;
+    margin-top: 10px;
 }
 
 .ornament {
@@ -643,11 +647,16 @@ footer {
 /* ─── Mobile Responsiveness (Experience Focus) ─── */
 @media (max-width: 768px) {
     header {
-        padding: 40px 15px 15px;
+        padding: 60px 15px 30px;
+        background: white;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
     }
 
     h1 {
-        font-size: 2.8rem;
+        font-size: 3.2rem;
+        line-height: 1;
+        margin-bottom: 12px;
     }
 
     .header-controls {
@@ -853,5 +862,32 @@ footer {
         padding: 20px;
         border-radius: 15px;
         font-size: 1rem;
+    }
+
+    /* Rodapé de Botões no Mobile */
+    .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        padding: 0 20px;
+        margin: 50px 0;
+        width: 100%;
+    }
+
+    .actions button {
+        width: 100%;
+        font-size: 1rem;
+        padding: 20px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .btn-secondary {
+        background: white;
+        border: 1px solid rgba(176,141,87,0.3) !important;
     }
 }
