@@ -406,6 +406,170 @@ const saveGiftPDF = () => {
     }
 };
 
+const downloadReportPDF = () => {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'pt', 'a4');
+    
+    const startDate = document.getElementById('report-start').value || '...';
+    const endDate = document.getElementById('report-end').value || '...';
+    const totalBruto = document.getElementById('total-bruto').textContent;
+    const totalLiquido = document.getElementById('total-liquido').textContent;
+    const totalCortesias = document.getElementById('total-cortesias').textContent;
+
+    // --- MODERN SLATE & GOLD DESIGN SYSTEM ---
+    const SLATE = [44, 44, 44];
+    const GOLD = [176, 141, 87];
+    const GREEN = [46, 125, 50];
+    const RED = [200, 0, 0];
+
+    // Função interna para o ícone de presente
+    const drawGift = (x, y) => {
+        pdf.setDrawColor(RED[0], RED[1], RED[2]);
+        pdf.setLineWidth(0.8);
+        pdf.rect(x, y - 7, 7, 7);
+        pdf.line(x + 3.5, y - 7, x + 3.5, y);
+        pdf.line(x, y - 3.5, x + 7, y - 3.5);
+        pdf.line(x + 1, y - 9, x + 3.5, y - 7);
+        pdf.line(x + 6, y - 9, x + 3.5, y - 7);
+    };
+
+    // 1. HEADER DE IMPACTO (DARK MODE)
+    pdf.setFillColor(SLATE[0], SLATE[1], SLATE[2]);
+    pdf.rect(0, 0, 595, 120, 'F');
+    
+    pdf.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
+    pdf.setFont("times", "bold");
+    pdf.setFontSize(28);
+    pdf.text("SPA THERA", 40, 65);
+    
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(10);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("RELATÓRIO FINANCEIRO EXECUTIVO", 40, 85);
+    
+    pdf.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
+    pdf.rect(420, 50, 135, 40, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(8);
+    pdf.text("PERÍODO SELECIONADO", 430, 65);
+    pdf.setFontSize(9);
+    pdf.text(`${startDate.split('-').reverse().join('/')} - ${endDate.split('-').reverse().join('/')}`, 430, 80);
+
+    // 2. CORPO DO RELATÓRIO
+    let y = 160;
+    pdf.setFillColor(240, 240, 240);
+    pdf.rect(40, y - 15, 515, 22, 'F');
+    
+    pdf.setFontSize(8);
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(SLATE[0], SLATE[1], SLATE[2]);
+    pdf.text("DETALHE DO ATENDIMENTO", 45, y);
+    pdf.text("DATA/HORA", 350, y);
+    pdf.text("VALOR", 550, y, { align: "right" });
+    
+    y += 25;
+
+    const rows = document.getElementById('report-body').querySelectorAll('tr');
+    
+    if (rows.length === 0 || rows[0].innerText.includes("Buscando") || rows[0].innerText.includes("Nenhum dado")) {
+        pdf.setFont("helvetica", "italic");
+        pdf.setTextColor(150, 150, 150);
+        pdf.text("Nenhum registro encontrado para este período.", 45, y + 10);
+    } else {
+        rows.forEach((tr, index) => {
+            const cells = tr.querySelectorAll('td');
+            if (cells.length >= 5) {
+                if (y > 750) {
+                    pdf.addPage();
+                    y = 50;
+                }
+
+                pdf.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
+                pdf.setLineWidth(1.5);
+                pdf.line(40, y - 10, 40, y + 15);
+
+                pdf.setFont("times", "bold");
+                pdf.setFontSize(11);
+                pdf.setTextColor(SLATE[0], SLATE[1], SLATE[2]);
+                pdf.text(cells[2].textContent.toUpperCase(), 50, y);
+                
+                pdf.setFont("helvetica", "normal");
+                pdf.setFontSize(9);
+                pdf.setTextColor(100, 100, 100);
+                pdf.text(cells[3].textContent, 50, y + 12);
+                
+                pdf.setTextColor(SLATE[0], SLATE[1], SLATE[2]);
+                pdf.text(`${cells[0].textContent} às ${cells[1].textContent}`, 350, y + 5);
+                
+                const valorRaw = cells[4].textContent.toUpperCase();
+                if (valorRaw.includes("CORTESIA")) {
+                    pdf.setTextColor(RED[0], RED[1], RED[2]);
+                    pdf.setFont("helvetica", "bold");
+                    drawGift(485, y + 5);
+                    pdf.text("CORTESIA", 550, y + 5, { align: "right" });
+                } else {
+                    pdf.setFont("helvetica", "bold");
+                    pdf.setTextColor(GREEN[0], GREEN[1], GREEN[2]);
+                    pdf.text(cells[4].textContent, 550, y + 5, { align: "right" });
+                }
+                
+                pdf.setDrawColor(240, 240, 240);
+                pdf.setLineWidth(0.5);
+                pdf.line(40, y + 20, 555, y + 20);
+                y += 35;
+            }
+        });
+    }
+
+    // 3. RESUMO FINANCEIRO (KPI BOARD)
+    y += 30;
+    if (y > 650) { pdf.addPage(); y = 60; }
+
+    pdf.setDrawColor(SLATE[0], SLATE[1], SLATE[2]);
+    pdf.setLineWidth(0.5);
+    pdf.rect(40, y, 515, 110);
+    
+    pdf.setFillColor(SLATE[0], SLATE[1], SLATE[2]);
+    pdf.rect(40, y, 150, 25, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(9);
+    pdf.text("SUMÁRIO EXECUTIVO", 50, y + 16);
+    
+    y += 50;
+    pdf.setTextColor(SLATE[0], SLATE[1], SLATE[2]);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(10);
+    pdf.text("VOLUME DE CORTESIAS:", 60, y);
+    pdf.setTextColor(RED[0], RED[1], RED[2]);
+    pdf.text(totalCortesias, 200, y);
+    
+    pdf.setTextColor(SLATE[0], SLATE[1], SLATE[2]);
+    pdf.text("FATURAMENTO BRUTO:", 300, y);
+    pdf.text(totalBruto, 420, y);
+    
+    y += 35;
+    // Linha de separação final
+    pdf.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
+    pdf.setLineWidth(0.5);
+    pdf.line(300, y - 10, 540, y - 10);
+
+    pdf.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(11);
+    pdf.text("RESULTADO LÍQUIDO (-30%):", 300, y + 5);
+    
+    // Valor Líquido em Verde (Sem box, direto no fundo)
+    pdf.setFontSize(14);
+    pdf.setTextColor(GREEN[0], GREEN[1], GREEN[2]);
+    pdf.text(totalLiquido, 540, y + 5, { align: "right" });
+    
+    pdf.setFontSize(7);
+    pdf.setTextColor(180, 180, 180);
+    pdf.text("RELATÓRIO GERADO PARA USO EXCLUSIVO DA ADMINISTRAÇÃO SPA THERA", 297, 810, { align: "center" });
+
+    pdf.save(`Relatorio_Executivo_Final_${startDate}.pdf`);
+};
+
 // ─── Events ───
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
@@ -432,6 +596,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('generate-report-btn').addEventListener('click', generateReport);
     document.getElementById('sheet-save-btn').addEventListener('click', saveSheetData);
     document.getElementById('edit-sheet').addEventListener('click', (e) => { if(e.target.id === 'edit-sheet') closeEditSheet(); });
+
+    // Report PDF Event
+    document.getElementById('save-pdf-btn').addEventListener('click', downloadReportPDF);
 
     // Gift Card Events
     document.getElementById('preview-gift-btn').addEventListener('click', updateGiftPreview);

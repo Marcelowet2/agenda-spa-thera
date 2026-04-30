@@ -781,6 +781,7 @@ footer {
     color: var(--light-text);
     text-transform: uppercase;
     letter-spacing: 1px;
+}
 .summary-label small {
     font-size: 0.75rem;
     color: #c0392b;
