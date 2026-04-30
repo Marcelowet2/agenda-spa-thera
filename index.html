@@ -95,7 +95,33 @@
 
     <footer>
         <p>&copy; 2024 Spa Thera - Todos os direitos reservados.</p>
+        <!-- Ícone de Cadeado para Histórico -->
+        <div id="secret-admin-trigger" title="Histórico do Sistema" style="margin-top: 15px; cursor: pointer; display: inline-block; transition: all 0.3s ease;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.6;">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+        </div>
     </footer>
+
+    <!-- Modal de Histórico de Auditoria (Escondido) -->
+    <div id="history-modal" class="sheet-overlay" aria-hidden="true">
+        <div class="sheet-content history-sheet" style="max-width: 800px;">
+            <button id="history-close" class="modal-close" onclick="closeSheet('history-modal')">&times;</button>
+            <div class="modal-header">
+                <h2><i class="fas fa-history"></i> Histórico do Sistema</h2>
+                <p>Registro de alterações e vouchers gerados</p>
+            </div>
+            <div class="history-filters" style="margin-bottom: 20px; display: flex; gap: 10px;">
+                <button onclick="loadHistory('all')" class="btn-secondary filter-btn">Todos</button>
+                <button onclick="loadHistory('agenda')" class="btn-secondary filter-btn">Agenda</button>
+                <button onclick="loadHistory('voucher')" class="btn-secondary filter-btn">Vouchers</button>
+            </div>
+            <div id="history-list" class="history-container" style="max-height: 400px; overflow-y: auto;">
+                <p style="text-align: center; color: #999; padding: 20px;">Carregando registros...</p>
+            </div>
+        </div>
+    </div>
 
     <!-- Report Modal -->
     <div id="report-modal" class="sheet-overlay" aria-hidden="true">

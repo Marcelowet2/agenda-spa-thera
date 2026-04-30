@@ -14,6 +14,23 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
+// ─── Logging System ───
+const logAction = async (type, action, details) => {
+    if (!auth.currentUser) return;
+    try {
+        await db.collection('system_logs').add({
+            type,
+            action,
+            details,
+            date: new Date().toISOString(),
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } catch (e) {
+        console.error("Erro ao registrar log:", e);
+    }
+};
+
+
 const CORRECT_PASS = "Neide6731";
 
 // ─── Constants ───
@@ -92,6 +109,7 @@ const clearDayData = async () => {
         const batch = db.batch();
         snapshot.docs.forEach(doc => batch.delete(doc.ref));
         await batch.commit();
+        logAction('delete', 'Limpeza de Agenda', `Todos os dados do dia ${selectedDate} foram excluídos.`);
         renderAgenda();
     } catch (error) {
         console.error("Erro ao limpar dados:", error);
@@ -146,7 +164,9 @@ const renderAgenda = async () => {
                 ${hasData ? `
                 <div class="summary-badges">
                     ${slotData.quarto ? '<span class="badge badge-quarto">Q.' + slotData.quarto + '</span>' : ''}
-                    ${slotData.valor ? '<span class="badge badge-valor">R$ ' + slotData.valor + '</span>' : ''}
+                    ${slotData.valor ? (isCortesia(slotData.valor) ? 
+                        '<span class="badge badge-cortesia">🎁 CORTESIA</span>' : 
+                        '<span class="badge badge-valor">R$ ' + slotData.valor + '</span>') : ''}
                 </div>
                 ` : '<span class="status-disponivel">Livre</span>'}
                 <div class="edit-indicator">
@@ -195,6 +215,12 @@ const saveSheetData = async () => {
     };
     const promises = Object.entries(fields).map(([key, val]) => saveAppointment(`${activeSlotKey}-${key}`, val));
     await Promise.all(promises);
+    
+    // Log único e completo do agendamento
+    const hourStr = document.getElementById('sheet-hour-title').textContent;
+    const logDetails = `Cliente: ${fields.nome || '-'} | Serviço: ${fields.servico || '-'} | Valor: ${fields.valor || '0,00'} | Quarto: ${fields.quarto || '-'}`;
+    logAction('agenda', `Agendamento Confirmado (${selectedDate} às ${hourStr})`, logDetails);
+
     renderAgenda();
     closeEditSheet();
 };
@@ -400,6 +426,8 @@ const saveGiftPDF = () => {
         const imgData = canvas.toDataURL('image/jpeg', 0.9);
         pdf.addImage(imgData, 'JPEG', 0, 0, 1200, 800);
         pdf.save(`Vale_Massagem_${toName}.pdf`);
+        
+        logAction('voucher', 'Voucher Gerado (PDF)', `Para: ${toName} | De: ${document.getElementById('gift-from').value} | Tipo: ${document.getElementById('gift-type').value}`);
     } catch (e) {
         console.error("Erro no PDF:", e);
         alert("Erro ao gerar PDF. Experimente salvar como Imagem.");
@@ -596,12 +624,75 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('generate-report-btn').addEventListener('click', generateReport);
     document.getElementById('sheet-save-btn').addEventListener('click', saveSheetData);
     document.getElementById('edit-sheet').addEventListener('click', (e) => { if(e.target.id === 'edit-sheet') closeEditSheet(); });
-
-    // Report PDF Event
     document.getElementById('save-pdf-btn').addEventListener('click', downloadReportPDF);
-
-    // Gift Card Events
     document.getElementById('preview-gift-btn').addEventListener('click', updateGiftPreview);
     document.getElementById('save-gift-img').addEventListener('click', saveGiftImage);
     document.getElementById('save-gift-pdf').addEventListener('click', saveGiftPDF);
+
+    // Gatilho do Histórico: Clique no cadeado do rodapé
+    document.getElementById('secret-admin-trigger').addEventListener('click', () => {
+        document.getElementById('history-modal').classList.add('open');
+        loadHistory('all');
+    });
 });
+
+const loadHistory = async (filter) => {
+    const list = document.getElementById('history-list');
+    list.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">Carregando registros...</p>';
+    
+    // Atualiza visual dos botões de filtro
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-secondary');
+    });
+    // Tenta achar o botão clicado para destacar (opcional)
+
+    try {
+        // Buscamos os últimos 100 logs sem filtro direto no Firebase para evitar erro de Índice
+        const snapshot = await db.collection('system_logs').orderBy('timestamp', 'desc').limit(100).get();
+        
+        if (snapshot.empty) {
+            list.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">Nenhum registro encontrado.</p>';
+            return;
+        }
+        
+        let logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // Filtramos localmente no JavaScript
+        if (filter === 'agenda') {
+            logs = logs.filter(l => l.type === 'agenda' || l.type === 'delete');
+        } else if (filter === 'voucher') {
+            logs = logs.filter(l => l.type === 'voucher');
+        }
+
+        if (logs.length === 0) {
+            list.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">Nenhum registro nesta categoria.</p>';
+            return;
+        }
+
+        list.innerHTML = '';
+        logs.forEach(data => {
+            const date = data.timestamp ? data.timestamp.toDate() : new Date(data.date);
+            const timeStr = date.toLocaleString('pt-BR');
+            
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            item.innerHTML = `
+                <div class="history-header">
+                    <span class="history-badge badge-${data.type}">${data.type}</span>
+                    <span class="history-time">${timeStr}</span>
+                </div>
+                <div class="history-action">${data.action}</div>
+                <div class="history-details">${data.details}</div>
+            `;
+            list.appendChild(item);
+        });
+    } catch (e) {
+        console.error("Erro no Histórico:", e);
+        list.innerHTML = `<p style="color:red; padding:20px; text-align:center;">Erro ao carregar: ${e.message}</p>`;
+    }
+};
+
+const closeSheet = (id) => {
+    document.getElementById(id).classList.remove('open');
+};
