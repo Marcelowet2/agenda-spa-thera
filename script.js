@@ -369,24 +369,39 @@ const updateGiftPreview = () => {
             const textX = 480;
             ctx.fillText(to.toUpperCase(), textX, 403);
             ctx.fillText(from.toUpperCase(), textX, 493);
-            ctx.fillText(type, textX, 583);
+            const typeLines = type.split('\n');
+            typeLines.forEach((line, i) => ctx.fillText(line, textX, 583 + (i * 38)));
             ctx.fillText(formattedDate, textX, 673);
         };
     } else if (model === "2") {
         svgTemplate = `
         <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
+            <defs>
+                <filter id="textShadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="3" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.25"/>
+                </filter>
+            </defs>
             <rect width="1200" height="800" fill="#fdfdfd"/>
             <rect width="700" height="800" fill="#889d79"/>
             
+            <!-- Spa Lotus Background -->
+            <g fill="#ffffff" opacity="0.08" transform="translate(350, 520) scale(1.6)">
+                <path d="M0,0 C-30,-60 -30,-120 0,-150 C30,-120 30,-60 0,0 Z" />
+                <path d="M0,0 C-40,-40 -80,-80 -100,-70 C-80,-20 -40,10 0,0 Z" />
+                <path d="M0,0 C-20,-50 -60,-100 -60,-120 C-30,-90 -10,-40 0,0 Z" />
+                <path d="M0,0 C40,-40 80,-80 100,-70 C80,-20 40,10 0,0 Z" />
+                <path d="M0,0 C20,-50 60,-100 60,-120 C30,-90 10,-40 0,0 Z" />
+            </g>
+
             <!-- Tipografia Criativa e de Alto Padrão -->
-            <text x="350" y="380" font-family="'Montserrat', sans-serif" font-weight="300" font-size="70" fill="#f4ecd8" text-anchor="middle" letter-spacing="40" transform="translate(20, 0)">VALE</text>
-            <text x="350" y="490" font-family="'Cormorant Garamond', serif" font-weight="600" font-size="100" fill="#ffffff" text-anchor="middle" letter-spacing="8" transform="translate(4, 0)">PRESENTE</text>
+            <text x="350" y="380" font-family="'Montserrat', sans-serif" font-weight="400" font-size="75" fill="#1a1f14" text-anchor="middle" letter-spacing="35" transform="translate(18, 0)" filter="url(#textShadow)">VALE</text>
+            <text x="350" y="490" font-family="'Cormorant Garamond', serif" font-weight="700" font-size="110" fill="#1a1f14" text-anchor="middle" letter-spacing="6" transform="translate(3, 0)" filter="url(#textShadow)">PRESENTE</text>
             
             <!-- Fita de Seda Translúcida (Traço Suave e Sofisticado) -->
             <g opacity="0.9">
-                <path d="M-50,580 C 150,580 200,680 350,680 C 500,680 550,550 750,580" fill="none" stroke="#f4ecd8" stroke-width="2"/>
-                <path d="M-50,595 C 170,595 220,665 350,665 C 480,665 530,565 750,595" fill="none" stroke="#f4ecd8" stroke-width="1" opacity="0.6"/>
-                <path d="M-50,610 C 190,610 240,650 350,650 C 460,650 510,580 750,610" fill="none" stroke="#f4ecd8" stroke-width="0.5" opacity="0.3"/>
+                <path d="M-50,580 C 150,580 200,680 350,680 C 500,680 550,550 750,580" fill="none" stroke="#f4ecd8" stroke-width="5"/>
+                <path d="M-50,595 C 170,595 220,665 350,665 C 480,665 530,565 750,595" fill="none" stroke="#f4ecd8" stroke-width="2.5" opacity="0.7"/>
+                <path d="M-50,610 C 190,610 240,650 350,650 C 460,650 510,580 750,610" fill="none" stroke="#f4ecd8" stroke-width="1.5" opacity="0.4"/>
             </g>
             
             <text x="350" y="730" font-family="'Montserrat', sans-serif" font-size="16" fill="#ffffff" text-anchor="middle" letter-spacing="1">PARA QUEM MERECE EQUILIBRAR CORPO E ALMA.</text>
@@ -396,7 +411,11 @@ const updateGiftPreview = () => {
             ctx.fillStyle = "#1e2417";
             ctx.textAlign = "center";
             ctx.font = "40px 'Tenor Sans', sans-serif";
-            ctx.fillText(type.toUpperCase() || "MASSAGEM", 950, 110);
+            const typeLines = (type || "MASSAGEM").toUpperCase().split('\n');
+            let startY = 110;
+            typeLines.forEach((line, i) => {
+                ctx.fillText(line, 950, startY + (i * 45));
+            });
             
             ctx.textAlign = "left";
             ctx.font = "20px 'Montserrat', sans-serif";
@@ -417,12 +436,24 @@ const updateGiftPreview = () => {
             ctx.fillText("ENTRE EM CONTATO PELO TELEFONE: (45) 99996-6530", 950, 740);
             ctx.fillText("E AGENDE SEU HORÁRIO", 950, 770);
 
-            // Carregar e desenhar a logo do usuário usando Base64 para não dar erro no PDF
             const logoImg = new Image();
             logoImg.onload = () => {
-                // Desenha a logo no topo esquerdo do cartão (centro em X=350)
-                // Usando 220px de largura por 220px de altura como base
-                ctx.drawImage(logoImg, 350 - 110, 40, 220, 220);
+                // Dynamically scale logo to preserve aspect ratio (prevents squishing)
+                const aspectRatio = logoImg.width / logoImg.height;
+                let logoWidth = 240;
+                let logoHeight = logoWidth / aspectRatio;
+                
+                // Cap height so it doesn't overlap text
+                if (logoHeight > 180) {
+                    logoHeight = 180;
+                    logoWidth = logoHeight * aspectRatio;
+                }
+                
+                // Center it horizontally
+                const x = 350 - (logoWidth / 2);
+                const y = 40 + (180 - logoHeight) / 2;
+                
+                ctx.drawImage(logoImg, x, y, logoWidth, logoHeight);
             };
             if (typeof logoBrancaBase64 !== 'undefined') {
                 logoImg.src = logoBrancaBase64;
@@ -454,7 +485,8 @@ const updateGiftPreview = () => {
             const tx = 430;
             ctx.fillText(from, tx, 440);
             ctx.fillText(to, tx, 520);
-            ctx.fillText(type, tx, 600);
+            const typeLines = type.split('\n');
+            typeLines.forEach((line, i) => ctx.fillText(line, tx, 600 + (i * 36)));
             ctx.fillText(formattedDate, tx, 680);
             
             ctx.fillStyle = "#d4af37";
@@ -488,8 +520,8 @@ const updateGiftPreview = () => {
             ctx.fillText("COM CARINHO DE: " + from, 600, 500);
             
             ctx.fillStyle = "#b76e79";
-            ctx.font = "30px 'Tenor Sans', sans-serif";
-            ctx.fillText(type.toUpperCase(), 600, 600);
+            const typeLines = type.toUpperCase().split('\n');
+            typeLines.forEach((line, i) => ctx.fillText(line, 600, 600 + (i * 30)));
             
             ctx.fillStyle = "#6d464c";
             ctx.font = "18px 'Montserrat', sans-serif";
@@ -519,7 +551,8 @@ const updateGiftPreview = () => {
             ctx.fillText(from, tx, 385);
             ctx.fillText(to, tx, 485);
             ctx.font = "35px 'Tenor Sans', sans-serif";
-            ctx.fillText(type, tx, 585);
+            const typeLines = type.split('\n');
+            typeLines.forEach((line, i) => ctx.fillText(line, tx, 585 + (i * 35)));
             ctx.font = "28px 'Montserrat', sans-serif";
             ctx.fillText(formattedDate, tx, 685);
             
