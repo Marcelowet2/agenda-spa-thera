@@ -220,9 +220,21 @@
                     <label>Tipo de Massagem:</label>
                     <input type="text" id="gift-type" placeholder="Ex: Massagem Relaxante">
                 </div>
-                <div class="input-field">
-                    <label>Validade:</label>
-                    <input type="date" id="gift-expiry">
+                <div class="input-row">
+                    <div class="input-field">
+                        <label>Validade:</label>
+                        <input type="date" id="gift-expiry">
+                    </div>
+                    <div class="input-field">
+                        <label>Modelo do Cartão:</label>
+                        <select id="gift-model" style="padding: 15px; border: 1px solid #eee; border-radius: 10px; font-size: 1rem; background: #fcfcfc; outline: none; width: 100%;">
+                            <option value="1">Modelo 1 - Clássico Dourado</option>
+                            <option value="2">Modelo 2 - Verde Natureza</option>
+                            <option value="3">Modelo 3 - Escuro Luxo</option>
+                            <option value="4">Modelo 4 - Ouro Rosé</option>
+                            <option value="5">Modelo 5 - Azul Serenity</option>
+                        </select>
+                    </div>
                 </div>
                 <button id="preview-gift-btn" class="btn-primary">Visualizar Prévia</button>
             </div>
@@ -278,6 +290,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- Scripts -->
+    <script src="assets/logo_base64.js"></script>
     <script src="script.js?v=7.3"></script>
     <script>
         if ('serviceWorker' in navigator) {

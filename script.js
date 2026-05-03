@@ -319,60 +319,217 @@ const isCortesia = (v) => v && ['0','0,00','cortesia','gratis','grátis'].includ
 const updateGiftPreview = () => {
     const canvas = document.getElementById('gift-canvas');
     const ctx = canvas.getContext('2d');
+    const modelSelect = document.getElementById('gift-model');
+    const model = modelSelect ? modelSelect.value : "1";
     
-    // 1. Criar o Template de ALTO LUXO via SVG
-    const svgTemplate = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
-        <!-- Fundo com degradê de seda -->
-        <defs>
-            <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#fdfbf7;stop-opacity:1" />
-                <stop offset="100%" style="stop-color:#f5f0e6;stop-opacity:1" />
-            </linearGradient>
-            <filter id="shadow" x="0" y="0" width="200%" height="200%">
-              <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#b08d57" flood-opacity="0.3"/>
-            </filter>
-        </defs>
-        
-        <rect width="1200" height="800" fill="url(#bgGrad)"/>
-        
-        <!-- Marca d'água botânica (Lótus minimalista) -->
-        <path d="M600,400 Q650,300 600,200 Q550,300 600,400 Z" fill="#b08d57" opacity="0.05" transform="scale(3) translate(-400,-150)"/>
-        <path d="M600,400 Q700,350 800,400 Q700,450 600,400 Z" fill="#b08d57" opacity="0.05" transform="scale(3) translate(-400,-150)"/>
-        
-        <!-- Moldura Dupla Dourada -->
-        <rect x="30" y="30" width="1140" height="740" fill="none" stroke="#b08d57" stroke-width="4" rx="10"/>
-        <rect x="45" y="45" width="1110" height="710" fill="none" stroke="#b08d57" stroke-width="1" opacity="0.6" rx="5"/>
-        
-        <!-- Ornamentos de Canto -->
-        <circle cx="30" cy="30" r="15" fill="#b08d57"/>
-        <circle cx="1170" cy="30" r="15" fill="#b08d57"/>
-        <circle cx="30" cy="770" r="15" fill="#b08d57"/>
-        <circle cx="1170" cy="770" r="15" fill="#b08d57"/>
+    let svgTemplate = '';
+    let renderLogic = null;
 
-        <!-- Branding Master -->
-        <text x="600" y="140" font-family="'Tenor Sans', sans-serif" font-size="28" fill="#b08d57" text-anchor="middle" letter-spacing="15">S P A</text>
-        <text x="600" y="220" font-family="'Cormorant Garamond', serif" font-size="110" fill="#3d362a" text-anchor="middle" font-weight="bold" filter="url(#shadow)">TheraSpa</text>
-        <text x="600" y="280" font-family="serif" font-style="italic" font-size="32" fill="#b08d57" text-anchor="middle">Voucher de Bem-estar &amp; Relaxamento</text>
-        
-        <!-- Linhas de Preenchimento Elegantes -->
-        <g stroke="#b08d57" stroke-width="1" opacity="0.4">
-            <line x1="480" y1="410" x2="1050" y2="410"/>
-            <line x1="480" y1="500" x2="1050" y2="500"/>
-            <line x1="480" y1="590" x2="1050" y2="590"/>
-            <line x1="480" y1="680" x2="1050" y2="680"/>
-        </g>
+    if (model === "1") {
+        svgTemplate = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
+            <defs>
+                <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#fdfbf7;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#f5f0e6;stop-opacity:1" />
+                </linearGradient>
+                <filter id="shadow" x="0" y="0" width="200%" height="200%">
+                  <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#b08d57" flood-opacity="0.3"/>
+                </filter>
+            </defs>
+            <rect width="1200" height="800" fill="url(#bgGrad)"/>
+            <path d="M600,400 Q650,300 600,200 Q550,300 600,400 Z" fill="#b08d57" opacity="0.05" transform="scale(3) translate(-400,-150)"/>
+            <path d="M600,400 Q700,350 800,400 Q700,450 600,400 Z" fill="#b08d57" opacity="0.05" transform="scale(3) translate(-400,-150)"/>
+            <rect x="30" y="30" width="1140" height="740" fill="none" stroke="#b08d57" stroke-width="4" rx="10"/>
+            <rect x="45" y="45" width="1110" height="710" fill="none" stroke="#b08d57" stroke-width="1" opacity="0.6" rx="5"/>
+            <circle cx="30" cy="30" r="15" fill="#b08d57"/>
+            <circle cx="1170" cy="30" r="15" fill="#b08d57"/>
+            <circle cx="30" cy="770" r="15" fill="#b08d57"/>
+            <circle cx="1170" cy="770" r="15" fill="#b08d57"/>
+            <text x="600" y="140" font-family="'Tenor Sans', sans-serif" font-size="28" fill="#b08d57" text-anchor="middle" letter-spacing="15">S P A</text>
+            <text x="600" y="220" font-family="'Cormorant Garamond', serif" font-size="110" fill="#3d362a" text-anchor="middle" font-weight="bold" filter="url(#shadow)">TheraSpa</text>
+            <text x="600" y="280" font-family="serif" font-style="italic" font-size="32" fill="#b08d57" text-anchor="middle">Voucher de Bem-estar &amp; Relaxamento</text>
+            <g stroke="#b08d57" stroke-width="1" opacity="0.4">
+                <line x1="480" y1="410" x2="1050" y2="410"/>
+                <line x1="480" y1="500" x2="1050" y2="500"/>
+                <line x1="480" y1="590" x2="1050" y2="590"/>
+                <line x1="480" y1="680" x2="1050" y2="680"/>
+            </g>
+            <text x="460" y="405" font-family="'Montserrat', sans-serif" font-size="20" fill="#b08d57" text-anchor="end" letter-spacing="3">PARA</text>
+            <text x="460" y="495" font-family="'Montserrat', sans-serif" font-size="20" fill="#b08d57" text-anchor="end" letter-spacing="3">DE</text>
+            <text x="460" y="585" font-family="'Montserrat', sans-serif" font-size="20" fill="#b08d57" text-anchor="end" letter-spacing="3">MASSAGEM</text>
+            <text x="460" y="675" font-family="'Montserrat', sans-serif" font-size="20" fill="#b08d57" text-anchor="end" letter-spacing="3">VALIDADE</text>
+            <circle cx="1050" cy="150" r="60" fill="none" stroke="#b08d57" stroke-width="1" stroke-dasharray="5,5"/>
+            <text x="1050" y="155" font-family="serif" font-size="14" fill="#b08d57" text-anchor="middle">ORIGINAL</text>
+        </svg>`;
+        renderLogic = (ctx, to, from, type, formattedDate) => {
+            ctx.fillStyle = "#3d362a";
+            ctx.textAlign = "left";
+            ctx.font = "italic 38px serif";
+            const textX = 480;
+            ctx.fillText(to.toUpperCase(), textX, 403);
+            ctx.fillText(from.toUpperCase(), textX, 493);
+            ctx.fillText(type, textX, 583);
+            ctx.fillText(formattedDate, textX, 673);
+        };
+    } else if (model === "2") {
+        svgTemplate = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
+            <rect width="1200" height="800" fill="#fdfdfd"/>
+            <rect width="700" height="800" fill="#889d79"/>
+            
+            <!-- Tipografia Criativa e de Alto Padrão -->
+            <text x="350" y="380" font-family="'Montserrat', sans-serif" font-weight="300" font-size="70" fill="#f4ecd8" text-anchor="middle" letter-spacing="40" transform="translate(20, 0)">VALE</text>
+            <text x="350" y="490" font-family="'Cormorant Garamond', serif" font-weight="600" font-size="100" fill="#ffffff" text-anchor="middle" letter-spacing="8" transform="translate(4, 0)">PRESENTE</text>
+            
+            <!-- Fita de Seda Translúcida (Traço Suave e Sofisticado) -->
+            <g opacity="0.9">
+                <path d="M-50,580 C 150,580 200,680 350,680 C 500,680 550,550 750,580" fill="none" stroke="#f4ecd8" stroke-width="2"/>
+                <path d="M-50,595 C 170,595 220,665 350,665 C 480,665 530,565 750,595" fill="none" stroke="#f4ecd8" stroke-width="1" opacity="0.6"/>
+                <path d="M-50,610 C 190,610 240,650 350,650 C 460,650 510,580 750,610" fill="none" stroke="#f4ecd8" stroke-width="0.5" opacity="0.3"/>
+            </g>
+            
+            <text x="350" y="730" font-family="'Montserrat', sans-serif" font-size="16" fill="#ffffff" text-anchor="middle" letter-spacing="1">PARA QUEM MERECE EQUILIBRAR CORPO E ALMA.</text>
+            <text x="350" y="760" font-family="'Montserrat', sans-serif" font-size="16" fill="#ffffff" text-anchor="middle" letter-spacing="1">PRESENTEIE-SE COM A REVOLUÇÃO DO BEM ESTAR.</text>
+        </svg>`;
+        renderLogic = (ctx, to, from, type, formattedDate) => {
+            ctx.fillStyle = "#1e2417";
+            ctx.textAlign = "center";
+            ctx.font = "40px 'Tenor Sans', sans-serif";
+            ctx.fillText(type.toUpperCase() || "MASSAGEM", 950, 110);
+            
+            ctx.textAlign = "left";
+            ctx.font = "20px 'Montserrat', sans-serif";
+            ctx.fillText("DE:", 750, 270);
+            ctx.fillRect(750, 360, 400, 2);
+            ctx.fillText("PARA:", 750, 450);
+            ctx.fillRect(750, 540, 400, 2);
+            
+            ctx.font = "36px 'Cormorant Garamond', serif";
+            ctx.textAlign = "center";
+            ctx.fillText(from, 950, 335);
+            ctx.fillText(to, 950, 515);
+            
+            ctx.font = "18px 'Montserrat', sans-serif";
+            ctx.fillText("VÁLIDO ATÉ " + formattedDate, 950, 680);
+            
+            ctx.font = "16px 'Montserrat', sans-serif";
+            ctx.fillText("ENTRE EM CONTATO PELO TELEFONE: (45) 99996-6530", 950, 740);
+            ctx.fillText("E AGENDE SEU HORÁRIO", 950, 770);
 
-        <!-- Etiquetas -->
-        <text x="460" y="405" font-family="'Montserrat', sans-serif" font-size="20" fill="#b08d57" text-anchor="end" letter-spacing="3">PARA</text>
-        <text x="460" y="495" font-family="'Montserrat', sans-serif" font-size="20" fill="#b08d57" text-anchor="end" letter-spacing="3">DE</text>
-        <text x="460" y="585" font-family="'Montserrat', sans-serif" font-size="20" fill="#b08d57" text-anchor="end" letter-spacing="3">MASSAGEM</text>
-        <text x="460" y="675" font-family="'Montserrat', sans-serif" font-size="20" fill="#b08d57" text-anchor="end" letter-spacing="3">VALIDADE</text>
-
-        <!-- Selo de Autenticidade -->
-        <circle cx="1050" cy="150" r="60" fill="none" stroke="#b08d57" stroke-width="1" stroke-dasharray="5,5"/>
-        <text x="1050" y="155" font-family="serif" font-size="14" fill="#b08d57" text-anchor="middle">ORIGINAL</text>
-    </svg>`;
+            // Carregar e desenhar a logo do usuário usando Base64 para não dar erro no PDF
+            const logoImg = new Image();
+            logoImg.onload = () => {
+                // Desenha a logo no topo esquerdo do cartão (centro em X=350)
+                // Usando 220px de largura por 220px de altura como base
+                ctx.drawImage(logoImg, 350 - 110, 40, 220, 220);
+            };
+            if (typeof logoBrancaBase64 !== 'undefined') {
+                logoImg.src = logoBrancaBase64;
+            } else {
+                logoImg.src = "assets/logo-branca.png";
+            }
+        };
+    } else if (model === "3") {
+        svgTemplate = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
+            <rect width="1200" height="800" fill="#151515"/>
+            <rect x="40" y="40" width="1120" height="720" fill="none" stroke="#d4af37" stroke-width="2"/>
+            <rect x="50" y="50" width="1100" height="700" fill="none" stroke="#d4af37" stroke-width="1" opacity="0.5"/>
+            
+            <text x="600" y="160" font-family="'Tenor Sans', sans-serif" font-size="30" fill="#d4af37" text-anchor="middle" letter-spacing="15">THERA SPA</text>
+            <text x="600" y="260" font-family="'Cormorant Garamond', serif" font-size="100" fill="#ffffff" text-anchor="middle" font-weight="bold">Gift Card</text>
+            
+            <path d="M 300 320 L 900 320" stroke="#d4af37" stroke-width="1" opacity="0.6"/>
+            
+            <text x="400" y="440" font-family="'Montserrat', sans-serif" font-size="18" fill="#d4af37" text-anchor="end" letter-spacing="2">DE:</text>
+            <text x="400" y="520" font-family="'Montserrat', sans-serif" font-size="18" fill="#d4af37" text-anchor="end" letter-spacing="2">PARA:</text>
+            <text x="400" y="600" font-family="'Montserrat', sans-serif" font-size="18" fill="#d4af37" text-anchor="end" letter-spacing="2">SERVIÇO:</text>
+            <text x="400" y="680" font-family="'Montserrat', sans-serif" font-size="18" fill="#d4af37" text-anchor="end" letter-spacing="2">VALIDADE:</text>
+        </svg>`;
+        renderLogic = (ctx, to, from, type, formattedDate) => {
+            ctx.fillStyle = "#ffffff";
+            ctx.textAlign = "left";
+            ctx.font = "italic 36px 'Cormorant Garamond', serif";
+            const tx = 430;
+            ctx.fillText(from, tx, 440);
+            ctx.fillText(to, tx, 520);
+            ctx.fillText(type, tx, 600);
+            ctx.fillText(formattedDate, tx, 680);
+            
+            ctx.fillStyle = "#d4af37";
+            ctx.fillRect(430, 450, 450, 1);
+            ctx.fillRect(430, 530, 450, 1);
+            ctx.fillRect(430, 610, 450, 1);
+            ctx.fillRect(430, 690, 450, 1);
+        };
+    } else if (model === "4") {
+        svgTemplate = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
+            <rect width="1200" height="800" fill="#fbf5f5"/>
+            <circle cx="600" cy="400" r="300" fill="#f3e8e8"/>
+            <rect x="30" y="30" width="1140" height="740" fill="none" stroke="#b76e79" stroke-width="4" rx="20"/>
+            
+            <text x="600" y="180" font-family="'Tenor Sans', sans-serif" font-size="40" fill="#b76e79" text-anchor="middle" letter-spacing="12">THERA SPA</text>
+            <text x="600" y="240" font-family="'Montserrat', sans-serif" font-size="16" fill="#885860" text-anchor="middle" letter-spacing="4">VALE PRESENTE DE BEM-ESTAR</text>
+            
+            <path d="M 400 280 L 800 280" stroke="#b76e79" stroke-width="2"/>
+        </svg>`;
+        renderLogic = (ctx, to, from, type, formattedDate) => {
+            ctx.fillStyle = "#6d464c";
+            ctx.textAlign = "center";
+            ctx.font = "24px 'Montserrat', sans-serif";
+            ctx.fillText("ESPECIALMENTE PARA", 600, 360);
+            
+            ctx.font = "bold italic 50px 'Cormorant Garamond', serif";
+            ctx.fillText(to, 600, 420);
+            
+            ctx.font = "20px 'Montserrat', sans-serif";
+            ctx.fillText("COM CARINHO DE: " + from, 600, 500);
+            
+            ctx.fillStyle = "#b76e79";
+            ctx.font = "30px 'Tenor Sans', sans-serif";
+            ctx.fillText(type.toUpperCase(), 600, 600);
+            
+            ctx.fillStyle = "#6d464c";
+            ctx.font = "18px 'Montserrat', sans-serif";
+            ctx.fillText("VÁLIDO ATÉ " + formattedDate, 600, 680);
+        };
+    } else if (model === "5") {
+        svgTemplate = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
+            <rect width="1200" height="800" fill="#e8f0f4"/>
+            <path d="M 0 0 L 1200 800 L 1200 0 Z" fill="#dce6eb"/>
+            <rect x="50" y="50" width="1100" height="700" fill="none" stroke="#4b7894" stroke-width="2"/>
+            
+            <text x="600" y="160" font-family="'Tenor Sans', sans-serif" font-size="45" fill="#2d4f66" text-anchor="middle" letter-spacing="15">THERA SPA</text>
+            <path d="M 500 200 L 700 200" stroke="#4b7894" stroke-width="1"/>
+            
+            <text x="300" y="380" font-family="'Montserrat', sans-serif" font-size="18" fill="#4b7894" text-anchor="end" letter-spacing="2">DE</text>
+            <text x="300" y="480" font-family="'Montserrat', sans-serif" font-size="18" fill="#4b7894" text-anchor="end" letter-spacing="2">PARA</text>
+            <text x="300" y="580" font-family="'Montserrat', sans-serif" font-size="18" fill="#4b7894" text-anchor="end" letter-spacing="2">MASSAGEM</text>
+            <text x="300" y="680" font-family="'Montserrat', sans-serif" font-size="18" fill="#4b7894" text-anchor="end" letter-spacing="2">VALIDADE</text>
+        </svg>`;
+        renderLogic = (ctx, to, from, type, formattedDate) => {
+            ctx.fillStyle = "#1e3747";
+            ctx.textAlign = "left";
+            ctx.font = "italic 45px 'Cormorant Garamond', serif";
+            
+            const tx = 340;
+            ctx.fillText(from, tx, 385);
+            ctx.fillText(to, tx, 485);
+            ctx.font = "35px 'Tenor Sans', sans-serif";
+            ctx.fillText(type, tx, 585);
+            ctx.font = "28px 'Montserrat', sans-serif";
+            ctx.fillText(formattedDate, tx, 685);
+            
+            ctx.fillStyle = "#4b7894";
+            ctx.fillRect(tx, 400, 500, 1);
+            ctx.fillRect(tx, 500, 500, 1);
+            ctx.fillRect(tx, 600, 500, 1);
+            ctx.fillRect(tx, 700, 500, 1);
+        };
+    }
 
     const img = new Image();
     const svgBlob = new Blob([svgTemplate], {type: 'image/svg+xml;charset=utf-8'});
@@ -382,22 +539,15 @@ const updateGiftPreview = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0);
 
-        ctx.fillStyle = "#3d362a";
-        ctx.textAlign = "left";
-        ctx.font = "italic 38px serif";
-
         const to = document.getElementById('gift-to').value || "...";
         const from = document.getElementById('gift-from').value || "...";
         const type = document.getElementById('gift-type').value || "...";
         const expiry = document.getElementById('gift-expiry').value;
         const formattedDate = expiry ? expiry.split('-').reverse().join('/') : "...";
 
-        // Coordenadas para alinhar com as novas linhas douradas
-        const textX = 480;
-        ctx.fillText(to.toUpperCase(), textX, 403);
-        ctx.fillText(from.toUpperCase(), textX, 493);
-        ctx.fillText(type, textX, 583);
-        ctx.fillText(formattedDate, textX, 673);
+        if (renderLogic) {
+            renderLogic(ctx, to, from, type, formattedDate);
+        }
 
         document.getElementById('gift-preview-container').style.display = 'block';
         URL.revokeObjectURL(url);
