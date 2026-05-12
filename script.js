@@ -771,7 +771,7 @@ const downloadReportPDF = () => {
 
     pdf.setDrawColor(SLATE[0], SLATE[1], SLATE[2]);
     pdf.setLineWidth(0.5);
-    pdf.rect(40, y, 515, 110);
+    pdf.rect(40, y, 515, 130);
     
     pdf.setFillColor(SLATE[0], SLATE[1], SLATE[2]);
     pdf.rect(40, y, 150, 25, 'F');
@@ -779,19 +779,28 @@ const downloadReportPDF = () => {
     pdf.setFontSize(9);
     pdf.text("SUMÁRIO EXECUTIVO", 50, y + 16);
     
-    y += 50;
+    const actualRows = Array.from(rows).filter(tr => tr.querySelectorAll('td').length >= 5);
+    const totalAtendimentos = actualRows.length;
+
+    y += 40;
     pdf.setTextColor(SLATE[0], SLATE[1], SLATE[2]);
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(10);
+    pdf.text("TOTAL DE ATENDIMENTOS:", 60, y);
+    pdf.setFont("helvetica", "bold");
+    pdf.text(`${totalAtendimentos}`, 210, y);
+    
+    y += 25;
+    pdf.setFont("helvetica", "normal");
     pdf.text("VOLUME DE CORTESIAS:", 60, y);
     pdf.setTextColor(RED[0], RED[1], RED[2]);
-    pdf.text(totalCortesias, 200, y);
+    pdf.text(totalCortesias, 210, y);
     
     pdf.setTextColor(SLATE[0], SLATE[1], SLATE[2]);
-    pdf.text("FATURAMENTO BRUTO:", 300, y);
-    pdf.text(totalBruto, 420, y);
+    pdf.text("FATURAMENTO BRUTO:", 300, y - 25);
+    pdf.text(totalBruto, 420, y - 25);
     
-    y += 35;
+    y += 30;
     // Linha de separação final
     pdf.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
     pdf.setLineWidth(0.5);
