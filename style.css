@@ -513,6 +513,13 @@ button {
     background: var(--soft-cream);
 }
 
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    filter: grayscale(0.5);
+}
+
 .btn-report {
     background: linear-gradient(135deg, #2c2c2c, #444);
     color: white;
@@ -728,6 +735,12 @@ footer {
 #report-table {
     width: 100%;
     border-collapse: collapse;
+    min-width: 600px; /* Força a rolagem em telas pequenas */
+}
+
+#report-table thead th,
+#report-table tbody td {
+    white-space: nowrap; /* Impede quebras de linha que escondem texto */
 }
 
 #report-table thead th {
@@ -754,6 +767,11 @@ footer {
     padding: 12px 18px;
     font-size: 0.9rem;
     color: var(--deep-text);
+}
+
+/* Modal do Relatório mais largo no Desktop */
+#report-modal .sheet-content {
+    max-width: 850px;
 }
 
 #report-table .valor-cell {

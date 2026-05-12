@@ -38,6 +38,7 @@ const START_HOUR = 15;
 const END_HOUR = 20;
 
 let selectedDate = new Date().toISOString().split('T')[0];
+let currentRenderId = 0;
 
 // ─── Security Layer ───
 const checkAuth = async () => {
@@ -122,10 +123,15 @@ let activeSlotKey = null;
 const renderAgenda = async () => {
     if (!auth.currentUser) return; // Proteção extra
 
+    const renderId = ++currentRenderId;
+    const savedData = await loadAppointmentsForDate();
+    
+    // Se uma nova renderização começou enquanto esta buscava dados, abortamos esta
+    if (renderId !== currentRenderId) return;
+
     const body = document.getElementById('agenda-body');
     body.innerHTML = '';
     
-    const savedData = await loadAppointmentsForDate();
     const dataMap = new Map(savedData.map(item => [item.id, item.value]));
 
     const START_MINUTES = START_HOUR * 60;
@@ -206,6 +212,8 @@ const closeEditSheet = () => {
 
 const saveSheetData = async () => {
     if (!activeSlotKey) return;
+    
+    const saveBtn = document.getElementById('sheet-save-btn');
     const fields = {
         nome: document.getElementById('sheet-nome').value,
         servico: document.getElementById('sheet-servico').value,
@@ -213,16 +221,28 @@ const saveSheetData = async () => {
         valor: document.getElementById('sheet-valor').value,
         quarto: document.getElementById('sheet-quarto').value
     };
-    const promises = Object.entries(fields).map(([key, val]) => saveAppointment(`${activeSlotKey}-${key}`, val));
-    await Promise.all(promises);
-    
-    // Log único e completo do agendamento
-    const hourStr = document.getElementById('sheet-hour-title').textContent;
-    const logDetails = `Cliente: ${fields.nome || '-'} | Serviço: ${fields.servico || '-'} | Valor: ${fields.valor || '0,00'} | Quarto: ${fields.quarto || '-'}`;
-    logAction('agenda', `Agendamento Confirmado (${selectedDate} às ${hourStr})`, logDetails);
 
-    renderAgenda();
-    closeEditSheet();
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Salvando...';
+
+    try {
+        const promises = Object.entries(fields).map(([key, val]) => saveAppointment(`${activeSlotKey}-${key}`, val));
+        await Promise.all(promises);
+        
+        // Log único e completo do agendamento
+        const hourStr = document.getElementById('sheet-hour-title').textContent;
+        const logDetails = `Cliente: ${fields.nome || '-'} | Serviço: ${fields.servico || '-'} | Valor: ${fields.valor || '0,00'} | Quarto: ${fields.quarto || '-'}`;
+        logAction('agenda', `Agendamento Confirmado (${selectedDate} às ${hourStr})`, logDetails);
+
+        await renderAgenda();
+        closeEditSheet();
+    } catch (e) {
+        console.error(e);
+        alert("Erro ao salvar dados.");
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Confirmar e Salvar';
+    }
 };
 
 const generateReport = async () => {
@@ -791,7 +811,9 @@ const downloadReportPDF = () => {
     pdf.setTextColor(180, 180, 180);
     pdf.text("RELATÓRIO GERADO PARA USO EXCLUSIVO DA ADMINISTRAÇÃO SPA THERA", 297, 810, { align: "center" });
 
-    pdf.save(`Relatorio_Executivo_Final_${startDate}.pdf`);
+    const startFormatted = startDate.split('-').reverse().join('-');
+    const endFormatted = endDate.split('-').reverse().join('-');
+    pdf.save(`Thera Spa relatorio financeiro ${startFormatted} ate ${endFormatted}.pdf`);
 };
 
 // ─── Events ───
@@ -819,6 +841,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     document.getElementById('generate-report-btn').addEventListener('click', generateReport);
     document.getElementById('sheet-save-btn').addEventListener('click', saveSheetData);
+    document.getElementById('report-modal').addEventListener('click', (e) => { if(e.target.id === 'report-modal') e.target.classList.remove('open'); });
+    document.getElementById('gift-card-modal').addEventListener('click', (e) => { if(e.target.id === 'gift-card-modal') e.target.classList.remove('open'); });
+    document.getElementById('history-modal').addEventListener('click', (e) => { if(e.target.id === 'history-modal') e.target.classList.remove('open'); });
     document.getElementById('edit-sheet').addEventListener('click', (e) => { if(e.target.id === 'edit-sheet') closeEditSheet(); });
     document.getElementById('save-pdf-btn').addEventListener('click', downloadReportPDF);
     document.getElementById('preview-gift-btn').addEventListener('click', updateGiftPreview);
