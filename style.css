@@ -263,9 +263,9 @@ h1 {
 }
 
 #control-number {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Montserrat', sans-serif;
     font-size: 1.1rem;
-    font-weight: 400;
+    font-weight: 600;
     color: var(--primary-gold);
     background: transparent;
     border: none;
@@ -434,8 +434,8 @@ tbody tr:hover {
     justify-content: center;
     border-radius: 12px 0 0 12px;
     border-right: 1px solid rgba(176,141,87,0.1);
-    font-family: 'Playfair Display', serif;
-    font-weight: 700;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
     color: var(--primary-gold);
     font-size: 1.4rem;
     flex-shrink: 0;
@@ -731,7 +731,7 @@ footer {
 }
 
 #report-table thead th {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Montserrat', sans-serif;
     font-size: 0.8rem;
     letter-spacing: 1px;
     text-transform: uppercase;

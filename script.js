@@ -266,7 +266,10 @@ const generateReport = async () => {
             appointments[key][field] = doc.data().value;
         });
 
-        const rows = Object.values(appointments).filter(a => (a.nome && a.nome.trim() !== '') || (a.valor && a.valor.trim() !== ''));
+        const rows = Object.values(appointments).filter(a => 
+            (a.nome && String(a.nome).trim() !== '') || 
+            (a.valor !== undefined && a.valor !== null && String(a.valor).trim() !== '')
+        );
         
         if (rows.length === 0) {
             emptyDiv.style.display = 'block';
@@ -312,7 +315,17 @@ const generateReport = async () => {
     }
 };
 
-const isCortesia = (v) => v && ['0','0,00','cortesia','gratis','grátis'].includes(v.toLowerCase().trim());
+const isCortesia = (v) => {
+    if (v === 0 || v === "0") return true;
+    if (!v) return false;
+    const s = String(v).toLowerCase().trim();
+    if (['cortesia', 'gratis', 'grátis'].includes(s)) return true;
+    
+    // Tenta converter para número e checar se é zero (remove R$, espaços e ajusta decimais)
+    const clean = s.replace(/r\$/g, '').replace(/\s/g, '').replace(/\./g, '').replace(',', '.');
+    const num = parseFloat(clean);
+    return num === 0;
+};
 
 // ─── Gift Card Logic (Ultra-Reliable v7.2 - SVG Embedded) ───
 
