@@ -527,6 +527,14 @@ button:disabled {
     font-family: 'Montserrat', sans-serif;
 }
 
+.btn-expenses {
+    background: linear-gradient(135deg, #c0392b, #e74c3c);
+    color: white;
+    border: none;
+    font-family: 'Montserrat', sans-serif;
+    box-shadow: 0 4px 15px rgba(192, 57, 43, 0.2);
+}
+
 .btn-report:hover {
     background: linear-gradient(135deg, #444, #222);
     transform: translateY(-2px);

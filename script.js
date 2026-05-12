@@ -40,6 +40,11 @@ const END_HOUR = 20;
 let selectedDate = new Date().toISOString().split('T')[0];
 let currentRenderId = 0;
 
+// Paginação do Relatório
+let reportFullData = [];
+let reportPageSize = 20;
+let reportCurrentPage = 1;
+
 // ─── Security Layer ───
 const checkAuth = async () => {
     const savedPass = localStorage.getItem('spa_pass');
@@ -274,12 +279,10 @@ const generateReport = async () => {
         const appointments = {};
         snapshot.docs.forEach(doc => {
             const docId = doc.id;
-            const [date, cellPart] = docId.split('_'); // '2024-04-28', '15h00-valor'
+            const [date, cellPart] = docId.split('_');
             if (!cellPart) return;
-            
-            const [slotKey, field] = cellPart.split('-'); // '15h00', 'valor'
+            const [slotKey, field] = cellPart.split('-');
             const key = `${date}_${slotKey}`;
-            
             if (!appointments[key]) {
                 appointments[key] = { date: date, hour: slotKey.replace('h', ':'), nome: '', valor: '' };
             }
@@ -290,48 +293,66 @@ const generateReport = async () => {
             (a.nome && String(a.nome).trim() !== '') || 
             (a.valor !== undefined && a.valor !== null && String(a.valor).trim() !== '')
         );
-        
-        if (rows.length === 0) {
-            emptyDiv.style.display = 'block';
-            return;
-        }
 
-        reportBody.innerHTML = '';
+        reportFullData = rows.sort((a,b)=>a.date.localeCompare(b.date)||a.hour.localeCompare(b.hour));
+        reportCurrentPage = 1;
+
         let totalVal = 0, countC = 0;
-
-        rows.sort((a,b)=>a.date.localeCompare(b.date)||a.hour.localeCompare(b.hour)).forEach(app => {
+        reportFullData.forEach(app => {
             const isC = isCortesia(app.valor);
-            let valNumeric = 0;
-            
             if (!isC && app.valor) {
-                // Limpeza agressiva de R$, pontos e vírgulas
                 let clean = app.valor.toString().replace(/R\$/g, '').replace(/\s/g, '').replace(/\./g, '').replace(',', '.');
-                valNumeric = parseFloat(clean) || 0;
+                totalVal += parseFloat(clean) || 0;
             }
-            
             if (isC) countC++;
-            totalVal += valNumeric;
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${app.date.split('-').reverse().join('/')}</td>
-                <td>${app.hour}</td>
-                <td>${app.nome || '-'}</td>
-                <td>${app.servico || '-'}</td>
-                <td>${isC ? '<span class="badge-cortesia">CORTESIA</span>' : 'R$ ' + (app.valor || '0,00')}</td>
-                <td>${isC ? 'Cortesia' : 'Atendimento'}</td>
-            `;
-            if (isC) tr.classList.add('row-cortesia');
-            reportBody.appendChild(tr);
         });
 
         document.getElementById('total-cortesias').textContent = `${countC} atendimento(s)`;
         document.getElementById('total-bruto').textContent = totalVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         document.getElementById('total-liquido').textContent = (totalVal * 0.7).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        renderReportPage(1);
         resultsDiv.style.display = 'block';
     } catch (e) { 
         console.error(e);
         alert("Erro técnico ao gerar relatório: " + e.message); 
+    }
+};
+
+const renderReportPage = (page) => {
+    reportCurrentPage = page;
+    const body = document.getElementById('report-body');
+    body.innerHTML = '';
+
+    const startIdx = (page - 1) * reportPageSize;
+    const endIdx = startIdx + reportPageSize;
+    const pageData = reportFullData.slice(startIdx, endIdx);
+
+    pageData.forEach(app => {
+        const isC = isCortesia(app.valor);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${app.date.split('-').reverse().join('/')}</td>
+            <td>${app.hour}</td>
+            <td>${app.nome || '-'}</td>
+            <td>${app.servico || '-'}</td>
+            <td>${isC ? '<span class="badge-cortesia">CORTESIA</span>' : 'R$ ' + (app.valor || '0,00')}</td>
+            <td>${isC ? 'Cortesia' : 'Atendimento'}</td>
+        `;
+        if (isC) tr.classList.add('row-cortesia');
+        body.appendChild(tr);
+    });
+
+    const totalPages = Math.ceil(reportFullData.length / reportPageSize);
+    const pagination = document.getElementById('report-pagination');
+    
+    if (totalPages > 1) {
+        pagination.style.display = 'flex';
+        document.getElementById('page-info').textContent = `Página ${page} de ${totalPages}`;
+        document.getElementById('prev-page-btn').disabled = (page === 1);
+        document.getElementById('next-page-btn').disabled = (page === totalPages);
+    } else {
+        pagination.style.display = 'none';
     }
 };
 
@@ -713,55 +734,50 @@ const downloadReportPDF = () => {
     
     y += 25;
 
-    const rows = document.getElementById('report-body').querySelectorAll('tr');
-    
-    if (rows.length === 0 || rows[0].innerText.includes("Buscando") || rows[0].innerText.includes("Nenhum dado")) {
+    if (reportFullData.length === 0) {
         pdf.setFont("helvetica", "italic");
         pdf.setTextColor(150, 150, 150);
         pdf.text("Nenhum registro encontrado para este período.", 45, y + 10);
     } else {
-        rows.forEach((tr, index) => {
-            const cells = tr.querySelectorAll('td');
-            if (cells.length >= 5) {
-                if (y > 750) {
-                    pdf.addPage();
-                    y = 50;
-                }
-
-                pdf.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
-                pdf.setLineWidth(1.5);
-                pdf.line(40, y - 10, 40, y + 15);
-
-                pdf.setFont("times", "bold");
-                pdf.setFontSize(11);
-                pdf.setTextColor(SLATE[0], SLATE[1], SLATE[2]);
-                pdf.text(cells[2].textContent.toUpperCase(), 50, y);
-                
-                pdf.setFont("helvetica", "normal");
-                pdf.setFontSize(9);
-                pdf.setTextColor(100, 100, 100);
-                pdf.text(cells[3].textContent, 50, y + 12);
-                
-                pdf.setTextColor(SLATE[0], SLATE[1], SLATE[2]);
-                pdf.text(`${cells[0].textContent} às ${cells[1].textContent}`, 350, y + 5);
-                
-                const valorRaw = cells[4].textContent.toUpperCase();
-                if (valorRaw.includes("CORTESIA")) {
-                    pdf.setTextColor(RED[0], RED[1], RED[2]);
-                    pdf.setFont("helvetica", "bold");
-                    drawGift(485, y + 5);
-                    pdf.text("CORTESIA", 550, y + 5, { align: "right" });
-                } else {
-                    pdf.setFont("helvetica", "bold");
-                    pdf.setTextColor(GREEN[0], GREEN[1], GREEN[2]);
-                    pdf.text(cells[4].textContent, 550, y + 5, { align: "right" });
-                }
-                
-                pdf.setDrawColor(240, 240, 240);
-                pdf.setLineWidth(0.5);
-                pdf.line(40, y + 20, 555, y + 20);
-                y += 35;
+        reportFullData.forEach((app, index) => {
+            if (y > 750) {
+                pdf.addPage();
+                y = 50;
             }
+
+            pdf.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
+            pdf.setLineWidth(1.5);
+            pdf.line(40, y - 10, 40, y + 15);
+
+            pdf.setFont("times", "bold");
+            pdf.setFontSize(11);
+            pdf.setTextColor(SLATE[0], SLATE[1], SLATE[2]);
+            pdf.text((app.nome || '-').toUpperCase(), 50, y);
+            
+            pdf.setFont("helvetica", "normal");
+            pdf.setFontSize(9);
+            pdf.setTextColor(100, 100, 100);
+            pdf.text(app.servico || '-', 50, y + 12);
+            
+            pdf.setTextColor(SLATE[0], SLATE[1], SLATE[2]);
+            pdf.text(`${app.date.split('-').reverse().join('/')} às ${app.hour}`, 350, y + 5);
+            
+            const isC = isCortesia(app.valor);
+            if (isC) {
+                pdf.setTextColor(RED[0], RED[1], RED[2]);
+                pdf.setFont("helvetica", "bold");
+                drawGift(485, y + 5);
+                pdf.text("CORTESIA", 550, y + 5, { align: "right" });
+            } else {
+                pdf.setFont("helvetica", "bold");
+                pdf.setTextColor(GREEN[0], GREEN[1], GREEN[2]);
+                pdf.text('R$ ' + (app.valor || '0,00'), 550, y + 5, { align: "right" });
+            }
+            
+            pdf.setDrawColor(240, 240, 240);
+            pdf.setLineWidth(0.5);
+            pdf.line(40, y + 20, 555, y + 20);
+            y += 35;
         });
     }
 
@@ -779,8 +795,7 @@ const downloadReportPDF = () => {
     pdf.setFontSize(9);
     pdf.text("SUMÁRIO EXECUTIVO", 50, y + 16);
     
-    const actualRows = Array.from(rows).filter(tr => tr.querySelectorAll('td').length >= 5);
-    const totalAtendimentos = actualRows.length;
+    const totalAtendimentos = reportFullData.length;
 
     y += 40;
     pdf.setTextColor(SLATE[0], SLATE[1], SLATE[2]);
@@ -849,6 +864,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('gift-close').addEventListener('click', () => document.getElementById('gift-card-modal').classList.remove('open'));
     
     document.getElementById('generate-report-btn').addEventListener('click', generateReport);
+    
+    // Paginação do Relatório
+    document.getElementById('prev-page-btn').addEventListener('click', () => {
+        if (reportCurrentPage > 1) renderReportPage(reportCurrentPage - 1);
+    });
+    document.getElementById('next-page-btn').addEventListener('click', () => {
+        const totalPages = Math.ceil(reportFullData.length / reportPageSize);
+        if (reportCurrentPage < totalPages) renderReportPage(reportCurrentPage + 1);
+    });
     document.getElementById('sheet-save-btn').addEventListener('click', saveSheetData);
     document.getElementById('report-modal').addEventListener('click', (e) => { if(e.target.id === 'report-modal') e.target.classList.remove('open'); });
     document.getElementById('gift-card-modal').addEventListener('click', (e) => { if(e.target.id === 'gift-card-modal') e.target.classList.remove('open'); });
@@ -864,7 +888,341 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('history-modal').classList.add('open');
         loadHistory('all');
     });
+    // Expenses
+    document.getElementById('expenses-btn').addEventListener('click', openExpensesModal);
+    document.getElementById('expenses-close').addEventListener('click', closeExpensesModal);
+    document.getElementById('save-expense-btn').addEventListener('click', saveExpense);
+    document.getElementById('filter-expenses-btn').addEventListener('click', loadExpenses);
+    document.getElementById('save-exp-pdf-btn').addEventListener('click', downloadExpensesPDF);
+    
+    const expensesModal = document.getElementById('expenses-modal');
+    expensesModal.addEventListener('click', (e) => {
+        if (e.target === expensesModal) closeExpensesModal();
+    });
 });
+
+// --- GESTÃO DE GASTOS ---
+
+const openExpensesModal = () => {
+    document.getElementById('expenses-modal').classList.add('open');
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('exp-date').value = today;
+    document.getElementById('exp-filter-start').value = today.substring(0, 8) + '01';
+    document.getElementById('exp-filter-end').value = today;
+    loadExpenses();
+};
+
+const closeExpensesModal = () => {
+    document.getElementById('expenses-modal').classList.remove('open');
+};
+
+const saveExpense = async () => {
+    const desc = document.getElementById('exp-desc').value.trim();
+    const valorRaw = document.getElementById('exp-valor').value.trim();
+    const date = document.getElementById('exp-date').value;
+    const category = document.getElementById('exp-category').value;
+
+    if (!desc || !valorRaw || !date) {
+        alert("Preencha todos os campos do gasto.");
+        return;
+    }
+
+    const valor = parseFloat(valorRaw.replace(',', '.'));
+    if (isNaN(valor)) {
+        alert("Valor inválido.");
+        return;
+    }
+
+    const btn = document.getElementById('save-expense-btn');
+    btn.disabled = true;
+    btn.textContent = "Salvando...";
+
+    try {
+        await db.collection('expenses').add({
+            desc,
+            category,
+            valor,
+            date,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        await db.collection('history').add({
+            tipo: 'gasto',
+            detalhes: `Novo gasto: ${desc} - R$ ${valor.toFixed(2)}`,
+            data: new Date().toISOString()
+        });
+
+        document.getElementById('exp-desc').value = "";
+        document.getElementById('exp-valor').value = "";
+        loadExpenses();
+    } catch (error) {
+        console.error("Erro ao salvar gasto:", error);
+        alert("Erro ao salvar gasto.");
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "Adicionar Gasto";
+    }
+};
+
+const loadExpenses = async () => {
+    const start = document.getElementById('exp-filter-start').value;
+    const end = document.getElementById('exp-filter-end').value;
+    const body = document.getElementById('expenses-body');
+    
+    // UI Elements
+    const faturamentoEl = document.getElementById('exp-faturamento-liq');
+    const totalGastosEl = document.getElementById('exp-total-gastos');
+    const lucroFinalEl = document.getElementById('exp-lucro-final');
+
+    body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Buscando dados consolidados...</td></tr>';
+
+    try {
+        // 1. Buscar Gastos
+        const snapshot = await db.collection('expenses')
+            .where('date', '>=', start)
+            .where('date', '<=', end)
+            .orderBy('date', 'desc')
+            .get();
+
+        // 2. Buscar Faturamento (Appointments) para comparação
+        const appSnapshot = await db.collection('appointments')
+            .where('date', '>=', start)
+            .where('date', '<=', end)
+            .get();
+
+        let totalGanhosBruto = 0;
+        appSnapshot.forEach(doc => {
+            const data = doc.data();
+            const id = doc.id;
+            // No Firebase, os valores estão salvos com chaves como '2024-05-12_15h00-valor'
+            if (id.includes('-valor')) {
+                const val = data.value;
+                if (val && !isCortesia(val)) {
+                    let clean = val.toString().replace(/R\$/g, '').replace(/\s/g, '').replace(/\./g, '').replace(',', '.');
+                    totalGanhosBruto += parseFloat(clean) || 0;
+                }
+            }
+        });
+
+        const faturamentoLiquido = totalGanhosBruto * 0.7;
+
+        body.innerHTML = '';
+        let totalGastos = 0;
+        const expenses = [];
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            totalGastos += data.valor;
+            expenses.push({ id: doc.id, ...data });
+        });
+
+        if (expenses.length === 0) {
+            body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#999;">Nenhum gasto encontrado no período.</td></tr>';
+        } else {
+            expenses.forEach(data => {
+                const perc = totalGastos > 0 ? (data.valor / totalGastos) * 100 : 0;
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = "1px solid #eee";
+                tr.innerHTML = `
+                    <td style="padding:10px;">${data.date.split('-').reverse().join('/')}</td>
+                    <td style="padding:10px;"><span style="font-size:0.75rem; background:#eee; padding:2px 8px; border-radius:10px; color:#666;">${data.category || 'Outros'}</span></td>
+                    <td style="padding:10px;">${data.desc}</td>
+                    <td style="padding:10px; text-align:right; font-weight:600; color:#c0392b;">R$ ${data.valor.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
+                    <td style="padding:10px; text-align:right; font-size: 0.8rem; color: #777;">${perc.toFixed(1)}%</td>
+                    <td style="padding:10px; text-align:center;">
+                        <button onclick="deleteExpense('${data.id}', '${data.desc}')" style="background:none; border:none; color:#e74c3c; cursor:pointer; font-size:1.1rem;">&times;</button>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        const lucroFinal = faturamentoLiquido - totalGastos;
+
+        // Atualiza a UI de Performance
+        if (faturamentoEl) faturamentoEl.textContent = faturamentoLiquido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        if (totalGastosEl) totalGastosEl.textContent = totalGastos.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        if (lucroFinalEl) {
+            lucroFinalEl.textContent = lucroFinal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            // Cores dinâmicas para o lucro
+            lucroFinalEl.style.color = lucroFinal >= 0 ? 'var(--primary-gold)' : '#c0392b';
+        }
+
+    } catch (error) {
+        console.error("Erro ao carregar dados consolidados:", error);
+        body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:red;">Erro ao carregar dados. Verifique sua conexão.</td></tr>';
+    }
+};
+
+const deleteExpense = async (id, desc) => {
+    if (!confirm(`Deseja realmente excluir o gasto: "${desc}"?`)) return;
+
+    try {
+        await db.collection('expenses').doc(id).delete();
+        loadExpenses();
+    } catch (error) {
+        alert("Erro ao excluir gasto.");
+    }
+};
+
+const downloadExpensesPDF = () => {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'pt', 'a4');
+    
+    const start = document.getElementById('exp-filter-start').value.split('-').reverse().join('/');
+    const end = document.getElementById('exp-filter-end').value.split('-').reverse().join('/');
+    
+    const SLATE = [44, 44, 44];
+    const GOLD = [176, 141, 87];
+    const RED = [192, 57, 43];
+
+    // Header
+    pdf.setFillColor(SLATE[0], SLATE[1], SLATE[2]);
+    pdf.rect(0, 0, 600, 110, 'F');
+    
+    pdf.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
+    pdf.setLineWidth(2);
+    pdf.line(40, 45, 40, 85);
+
+    pdf.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
+    pdf.setFontSize(26);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("SPA THERA", 55, 68);
+    
+    pdf.setTextColor(200, 200, 200);
+    pdf.setFontSize(10);
+    pdf.setFont("helvetica", "normal");
+    pdf.text("RELATÓRIO DETALHADO DE GASTOS", 55, 85);
+
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(9);
+    pdf.text(`PERÍODO: ${start} até ${end}`, 550, 85, { align: "right" });
+
+    let y = 150;
+    pdf.setFillColor(248, 248, 248);
+    pdf.rect(40, y - 15, 515, 20, 'F');
+    pdf.setTextColor(SLATE[0], SLATE[1], SLATE[2]);
+    pdf.setFontSize(9);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("DATA", 50, y);
+    pdf.text("CATEGORIA", 110, y);
+    pdf.text("DESCRIÇÃO", 210, y);
+    pdf.text("VALOR", 500, y, { align: "right" });
+    pdf.text("%", 540, y, { align: "right" });
+    
+    pdf.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
+    pdf.setLineWidth(1);
+    pdf.line(40, y + 8, 555, y + 8);
+    
+    y += 25;
+    pdf.setFont("helvetica", "normal");
+    pdf.setTextColor(80, 80, 80);
+    pdf.setFontSize(8);
+    
+    const rows = document.getElementById('expenses-body').querySelectorAll('tr');
+    let total = 0;
+    const catSummary = {};
+
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 5) return;
+
+        if (y > 750) { pdf.addPage(); y = 60; }
+        
+        const date = cells[0].textContent;
+        const cat = cells[1].textContent;
+        const desc = cells[2].textContent;
+        const valStr = cells[3].textContent;
+        const perc = cells[4].textContent;
+
+        pdf.text(date, 50, y);
+        pdf.text(cat, 110, y);
+        pdf.text(desc.substring(0, 45), 210, y);
+        pdf.text(valStr, 500, y, { align: "right" });
+        pdf.text(perc, 540, y, { align: "right" });
+        
+        const valNumeric = parseFloat(valStr.replace('R$', '').replace(/\s/g, '').replace(/\./g, '').replace(',', '.'));
+        if (!isNaN(valNumeric)) {
+            total += valNumeric;
+            catSummary[cat] = (catSummary[cat] || 0) + valNumeric;
+        }
+        
+        pdf.setDrawColor(240, 240, 240);
+        pdf.line(40, y + 5, 555, y + 5);
+        y += 20;
+    });
+
+    // --- Resumo por Categoria ---
+    y += 20;
+    if (y > 600) { pdf.addPage(); y = 60; }
+    
+    pdf.setFillColor(250, 250, 250);
+    pdf.rect(40, y, 200, (Object.keys(catSummary).length * 20) + 30, 'F');
+    pdf.setDrawColor(230, 230, 230);
+    pdf.rect(40, y, 200, (Object.keys(catSummary).length * 20) + 30);
+    
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(SLATE[0], SLATE[1], SLATE[2]);
+    pdf.text("DISTRIBUIÇÃO POR CATEGORIA", 50, y + 15);
+    y += 30;
+    
+    pdf.setFont("helvetica", "normal");
+    Object.entries(catSummary).sort((a,b) => b[1] - a[1]).forEach(([cat, val]) => {
+        const p = ((val / total) * 100).toFixed(1);
+        pdf.text(`${cat}:`, 50, y);
+        pdf.text(`${p}%`, 230, y, { align: "right" });
+        y += 18;
+    });
+
+    // --- Sumário de Performance Financeira ---
+    y += 30;
+    if (y > 650) { pdf.addPage(); y = 60; }
+
+    const fatLiq = document.getElementById('exp-faturamento-liq').textContent;
+    const lucroFin = document.getElementById('exp-lucro-final').textContent;
+
+    pdf.setDrawColor(SLATE[0], SLATE[1], SLATE[2]);
+    pdf.setLineWidth(0.5);
+    pdf.rect(40, y, 515, 110);
+    
+    pdf.setFillColor(SLATE[0], SLATE[1], SLATE[2]);
+    pdf.rect(40, y, 180, 25, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(9);
+    pdf.text("DESEMPENHO FINANCEIRO", 50, y + 16);
+    
+    y += 45;
+    pdf.setTextColor(SLATE[0], SLATE[1], SLATE[2]);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(10);
+    pdf.text("FATURAMENTO LÍQUIDO (MASSAGENS):", 60, y);
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
+    pdf.text(fatLiq, 540, y, { align: "right" });
+    
+    y += 25;
+    pdf.setTextColor(SLATE[0], SLATE[1], SLATE[2]);
+    pdf.setFont("helvetica", "normal");
+    pdf.text("TOTAL DE GASTOS OPERACIONAIS:", 60, y);
+    pdf.setTextColor(RED[0], RED[1], RED[2]);
+    pdf.setFont("helvetica", "bold");
+    pdf.text(`(-) R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits:2})}`, 540, y, { align: "right" });
+    
+    y += 20;
+    pdf.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
+    pdf.line(300, y, 540, y);
+    
+    y += 15;
+    pdf.setTextColor(SLATE[0], SLATE[1], SLATE[2]);
+    pdf.setFontSize(12);
+    pdf.text("LUCRO FINAL:", 300, y);
+    pdf.setFontSize(16);
+    pdf.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
+    pdf.text(lucroFin, 540, y, { align: "right" });
+
+    const filename = `Thera Spa relatorio de GASTOS ${start.replace(/\//g, '-')} ate ${end.replace(/\//g, '-')}.pdf`;
+    pdf.save(filename);
+};
 
 const loadHistory = async (filter) => {
     const list = document.getElementById('history-list');
